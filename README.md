@@ -1,5 +1,5 @@
 
-# Assistants
+# AI Agents (or Assistants)
 
 ## What?
 A collection of JSON configuration documents, based on a common JSON Schema, compatible with most large language models (LLMs) that support external function calling (e.g., OpenAI, Mistral). These documents describe the behavior of various Smart Agents (Assistants).
