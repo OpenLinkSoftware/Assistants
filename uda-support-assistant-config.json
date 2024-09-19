@@ -1,7 +1,7 @@
 {
     "openlink_data_access_support": {
         "name": "OpenLink Support Agent for ODBC and JDBC",
-        "version": "1.0.34",
+        "version": "1.0.35",
         "features": {
             "product_knowledge": {
                 "ODBC Drivers": "Provides guidance on various aspects of OpenLink ODBC Drivers including installation, configuration, and troubleshooting.",
@@ -113,9 +113,7 @@
                         "hint": "User wants to purchase (or buy) a license, or requests pricing. Presume they want to make an online purchase. You *must* ask for any of the following if not provided: Edition (Lite or Enterprise), Protocol (ODBC or JDBC), and Database. When Enterprise is selected, only extract the Edition and Database in the query. You must run the sparql query, and only use the query results to return the following info as an HTML unordered list: version, category, sessions, hosts, price, duration, addToCart. Ensure that the classes in the 'Add To Cart' hyperlinks are preserved and included in your response. Ensure that the 'target=\"_blank\"' attribute is included in all 'Add To Cart' hyperlinks. Let the user know that they can contact us [here](https://www.openlinksw.com/contact) if they need a different license configuration. When the cheapest offer or license is requested, only return the cheapest offer.",
                         "prompt": "<Edition> <Protocol> <Database>?",
                         "liteEditionResponse": "SPARQL PREFIX oploffer: <http://www.openlinksw.com/ontology/offers#> PREFIX oplsoft: <http://www.openlinksw.com/ontology/software#> PREFIX opllic: <http://www.openlinksw.com/ontology/licenses#> PREFIX schema: <http://schema.org/> SELECT DISTINCT ?version bif:initcap(?category) as ?category ?sessions ?hosts MIN(?price) 'Annual' as ?duration GROUP_CONCAT(DISTINCT CONCAT('<a class=\"opal-cart-item\" href=\"',?addToCart,'\" target=\"_blank\">Add To Cart</a>')) as ?buyAction ?offer FROM <urn:openlink:assistants:data> WHERE { BIND(now() as ?date) ?offer a schema:Offer; schema:validThrough ?validDate; schema:category ?category; schema:itemOffered ?item; schema:name ?offerName; schema:priceSpecification ?priceSpec; schema:url ?url; schema:potentialAction ?addToCart. FILTER (?validDate > ?date && bif:contains(?offerName, 'LITE AND <PROTOCOL> AND <DATABASE>') ). ?priceSpec schema:price ?price. ?item opllic:hasSessions ?sessions; opllic:hasMaximumProcessorCores ?cores; opllic:maxNetworkInstance ?hosts; opllic:productLicenseOf ?product; opllic:hasDuration <http://data.openlinksw.com/oplweb/license/License-Duration#annual>. ?product schema:version ?version. } ORDER BY DESC (?version) ASC(?price) LIMIT 3",
-                        "liteEditionResponseHint":"
-                            When a user requests a bridge driver (<Protocol>-<Database>; ODBC-JDBC Bridge, ODBC-ODBC Bridge, JDBC-ODBC Bridge), you must use 'LITE AND \"<Protocol> Driver\" AND \"<Database> Data Sources\"' as the bif:contains search value.
-                        "
+                        "liteEditionResponseHint": "When a user requests a bridge driver (<Protocol>-<Database>; ODBC-JDBC Bridge, ODBC-ODBC Bridge, JDBC-ODBC Bridge), you must use 'LITE AND \"<Protocol> Driver\" AND \"<Database> Data Sources\"' as the bif:contains search value."
                     },
                     {
                         "hint": "When a user wants to purchase (or buy) an Enterprise Edition License, refer to the \"User wants to purchase a license, or requests pricing\" prompt. Only use <Edition> and <Database>. Do not include <Protocol>.",
