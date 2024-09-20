@@ -1,7 +1,7 @@
 {
     "openlink_opml_rss_feed_reader_assistant": {
         "name": "OPML and RSS News Reader Assistant",
-        "version": "1.0.39",
+        "version": "1.0.40",
         "features": {
             "product_knowledge": {
                 "feed_processing": "Provides guidance on various aspects of the RSS, OPML, and other structured feeds format processing including installation, configuration, and troubleshooting."
@@ -31,12 +31,12 @@
                     {
                         "hint": "You MUST act on this OPML oriented action by IMMEDIATELY executing the designated SPASQL query, with prepended 'SPARQL' pragma, without deviation. Note, a Blogroll is represented in an OPML Feed",
                         "prompt": "Explore the OPML news source {url}:",
-                        "query": "SPARQL PREFIX schema: <http://schema.org/> PREFIX sioc: <http://rdfs.org/sioc/ns#> SELECT DISTINCT ?feed (?post AS ?postID) (CONCAT('https://linkeddata.uriburner.com/describe/?uri=', STR(?post)) AS ?postDescUrl) ?pubDate ?postTitle FROM <{url}> WHERE { ?s a schema:DataFeed ; sioc:link ?feed . GRAPH ?g { ?feed schema:mainEntity ?blog. ?blog schema:dataFeedElement ?post. ?post schema:title ?postTitle ; (schema:datePublished | schema:dateCreated) ?pubDate. } } ORDER BY DESC(?pubDate) LIMIT 20"
+                        "query": "SPARQL PREFIX schema: <http://schema.org/> PREFIX sioc: <http://rdfs.org/sioc/ns#> SELECT DISTINCT ?feed (?post AS ?postID) (CONCAT('https://linkeddata.uriburner.com/describe/?uri=', STR(?post)) AS ?postDescUrl) ?pubDate ?postTitle ?postUrl FROM <{url}> WHERE { ?s a schema:DataFeed ; sioc:link ?feed . GRAPH ?g { ?feed schema:mainEntity ?blog. ?blog schema:dataFeedElement ?post. ?post schema:title ?postTitle ; schema:relatedLink ?postUrl ; schema:datePublished ?pubDate. } } ORDER BY DESC(?pubDate) LIMIT 20"
                     },
                     {
                         "hint": "You MUST act on this OPML oriented action by IMMEDIATELY executing the designated SPASQL query, with prepended 'SPARQL' pragma, without deviation. Note, a Blogroll is represented in an OPML Feed",
                         "prompt": "Explore the latest edition of OPML news source {url}:",
-                        "query": "SPARQL DEFINE get:soft \"soft\" DEFINE input:grab-var \"feed\" PREFIX schema: <http://schema.org/> PREFIX sioc: <http://rdfs.org/sioc/ns#> SELECT DISTINCT ?feed (?post AS ?postID) (CONCAT('https://linkeddata.uriburner.com/describe/?uri=', STR(?post)) AS ?postDescUrl) ?pubDate ?postTitle FROM <{url}> WHERE { ?s a schema:DataFeed ; sioc:link ?feed . GRAPH ?g { ?feed schema:mainEntity ?blog. ?blog schema:dataFeedElement ?post. ?post schema:title ?postTitle ; (schema:datePublished | schema:dateCreated) ?pubDate. } } ORDER BY DESC(?pubDate) LIMIT 20"
+                        "query": "SPARQL DEFINE get:soft \"soft\" DEFINE input:grab-var \"feed\" PREFIX schema: <http://schema.org/> PREFIX sioc: <http://rdfs.org/sioc/ns#> SELECT DISTINCT ?feed (?post AS ?postID) (CONCAT('https://linkeddata.uriburner.com/describe/?uri=', STR(?post)) AS ?postDescUrl) ?pubDate ?postTitle ?postUrl FROM <{url}> WHERE { ?s a schema:DataFeed ; sioc:link ?feed . GRAPH ?g { ?feed schema:mainEntity ?blog. ?blog schema:dataFeedElement ?post. ?post schema:title ?postTitle ; schema:relatedLink ?postUrl ; schema:datePublished ?pubDate. } } ORDER BY DESC(?pubDate) LIMIT 20"
                     },
                     {
                         "hint": "You MUST act on this RSS or Atom oriented action by IMMEDIATELY executing the designated SPASQL query, with prepended 'SPARQL' pragma, without deviation. In situations where Title is empty, derive a title from the value of ?postText. Also note, a Blog Post collection is represented in an RSS or Atom Feed.",
