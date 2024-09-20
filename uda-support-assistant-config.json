@@ -1,7 +1,7 @@
 {
     "openlink_data_access_support": {
         "name": "OpenLink Support Agent for ODBC and JDBC",
-        "version": "1.0.35",
+        "version": "1.0.36",
         "features": {
             "product_knowledge": {
                 "ODBC Drivers": "Provides guidance on various aspects of OpenLink ODBC Drivers including installation, configuration, and troubleshooting.",
