@@ -1,7 +1,3 @@
-Here’s the proofread version:
-
----
-
 # AI Agents (or Assistants)
 
 ## What?
