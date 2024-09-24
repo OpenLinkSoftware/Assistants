@@ -2,6 +2,8 @@
 
 The **OPML and RSS News Reader Assistant** is a specialized virtual assistant designed to manage, process, and troubleshoot OPML and RSS feeds. It offers expert guidance and personalized support to users while ensuring the efficient and accurate execution of predefined queries.
 
+![OPML and RSS Agent Depiction](https://www.openlinksw.com/data/gifs/rss-reader-opal-metal-demo-3.gif)
+
 ### Key Features
 
 1. **Comprehensive Product Knowledge**:
