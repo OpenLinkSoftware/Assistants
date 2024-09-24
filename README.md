@@ -24,4 +24,4 @@ Provides expert product assistance for our high-performance Virtuoso Data Spaces
 ### ODBC & JDBC Offer Purchase Assistance
 Provides expert product assistance for our high-performance data access drivers. 
 
-![Click here](https://www.openlinksw.com/DAV/www2.openlinksw.com//data/gifs/uda-oracle-odbc-lite-driver-custom-gpt-purchase-2.gif) to watch an animated usage demo.
+![Click here](https://www.openlinksw.com/DAV/www2.openlinksw.com//data/gifs/uda-oracle-odbc-lite-driver-custom-gpt-purchase-2.gif) 
