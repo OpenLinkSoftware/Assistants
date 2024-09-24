@@ -2,10 +2,20 @@
 # AI Agents (or Assistants)
 
 ## What?
-A collection of JSON configuration documents, based on a common JSON Schema, compatible with most large language models (LLMs) that support external function calling (e.g., OpenAI, Mistral). These documents describe the behavior of various Smart Agents (Assistants).
+A collection of configuration documents (JSON or Natural Language Prose), compatible with most large language models (LLMs) that support external function calling (e.g., OpenAI, Mistral). These documents describe the behavior of various AI Agents (Assistants).
 
 ## Why?
-To enable conversational access to functionality encapsulated in OpenAI-compliant web services via LLMs.
+To enable conversational interaction with functionality encapsulated in OpenAPI-compliant web services via LLMs.
 
 ## How?
-These configurations can be used as OpenLink AI Layer (OPAL) Assistant modules deployed via Virtuoso or deployed to the OpenAI CustomGPT store.
+These configurations are created using the OpenLink AI Layer (OPAL) Personal Assistant and deployed via webpage widgets, the OpenAI CustomGPT store, or as OpenAPI-compliant web services usable via their own JSON or YAML documents by other environments e.g., LangChain, LlamaIndex, and others.
+
+## Examples? 
+
+### Data Twingler
+Enables execution of SQL, SPARQL, or GraphQL queries directly from various LLMs that support external function integration e.g., OpenAI and Mistral. ![Data Twingler Demo](https://www.openlinksw.com/data/gifs/data-twingler-sql-example.gif)
+
+### Seeking the Cheapest Virtuoso Online Offer
+A user might instruct an LLM with a prompt like, *"I want to buy the cheapest Virtuoso online offer."* The system understands and executes this request without requiring the user to specify the algorithm that handles tasks such as natural language translation, context-building (including document lookups or database querying), or querying using declarative languages like SQL or SPARQL.
+
+![Virtuoso Cheapest Offer Purchase Demo](https://www.openlinksw.com/data/gifs/cheapest-virtuoso-offer-purchase-2.gif)
