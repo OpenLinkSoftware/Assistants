@@ -159,13 +159,10 @@ As the Query Processing Configuration Agent, you should inform the user of the c
 # Conclusion
 The addition of direct invocation of SQL, SPARQL, SPARQL-FED, and GraphQL through natural language-driven declarative instructions highlights the magnitude of AI-driven disruption in the software industry. The loose coupling of AI Agents, data spaces, and data access protocols introduces a more powerful form of software automation, where hallucinations are mitigated by explicit interaction with trusted sources of data, information, and knowledge. This entire approach is viable, as demonstrated in this post, without the need for imperative programming or platform-specific coding.
 
-As mentioned in an earlier post in this series, you can explore the OpenLink AI Agent GitHub repository, where we continue to build and deploy AI Agents using the loose coupling principles laid out in this series.
+**Note**: The ability to perform declarative queries across various data spaces using SQL, SPARQL, and GraphQL stems from publishing the corresponding query handlers as OpenAPI-compliant web services. Below are the service description documents for the default URIBurner instance associated with the OpenLink Data Twingler:
 
-# Related
+* [YAML-based Service Description](https://linkeddata.uriburner.com/chat/functions/openapi.yaml)
+* [JSON-based Service Description](https://linkeddata.uriburner.com/chat/functions/openapi.json)
 
-* [AI Use Case Example: Solving News Reading Challenges via OPML, RSS, and Atom Feeds Processing](https://www.linkedin.com/pulse/ai-use-case-example-solving-news-reading-challenges-via-idehen-hztre/)
-* [Guiding Principles for AI Agents Design](https://www.linkedin.com/pulse/guiding-principles-ai-agents-design-kingsley-uyi-idehen-eigie/)
-* [OpenLink Data Twingler CustomGPT from OpenAI's GPT Store](https://chatgpt.com/g/g-z8YBujVdf-openlink-data-twingler)
-* [About the OpenLink AI Layer (OPAL)](https://opal.openlinksw.com)
-* [About the OpenLink Virtuoso Platform](https://virtuoso.openlinksw.com)
+
 
