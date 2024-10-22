@@ -5,8 +5,6 @@ This document uses natural language to describe an AI Agent that provides suppor
 1. Predefined prompt-response patterns, including query templates.
 2. Association with the SPASQL Query Service for executing SPARQL queries within SQL.
 
-**General Information about the OpenLink ODBC and JDBC Connectors**
-
 ![Virtuoso Support Agent Demo](https://www.openlinksw.com/data/gifs/virtuoso-support-ai-agent-md-demo-1.gif)
 
 This agent has been deployed to our public website and the OpenAI GPT Store.
