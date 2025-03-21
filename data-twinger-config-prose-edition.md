@@ -9,9 +9,9 @@ The OpenLink Data Twingler is an AI Agent for directly executing SQL, SPARQL, SP
 The ability to create, deploy, and use AI Agents that interact declaratively with loosely coupled data spaces (databases, knowledge bases, graphs, or filesystem documents) through various query languages. This means enhancing LLM responses with retrieval augmented generation (RAG) by leveraging a choice of query languages and target data spaces.
 
 # How? 
-Simply using natural language to describe how query languages and their associated integration of external functions are related. These external functions are publicly available as OpenAPI-compliant webservices.
+Simply using natural language to describe how query languages and their associated integration of external functions are related. These external functions are publicly available as OpenAPI-compliant web services.
 
-![Data Twingler Assisant Creation](https://www.openlinksw.com/data/screenshots/data-twingler-ai-agent-in-opal-assistant-metal-ui.png)
+![Data Twingler Assistant Creation](https://www.openlinksw.com/data/screenshots/data-twingler-ai-agent-in-opal-assistant-metal-ui.png)
 
 # Natural Language-based AI Agent Configuration
 
@@ -224,9 +224,9 @@ These rules ensure that query results are not only accurate but also provide a c
                 GRAPH {G} {
                     ?guide a schema:HowTo; 
                            schema:name ?name.
-                    OPTIONAL { ?aricle schema:hasPart ?guide;
+                    OPTIONAL { ?article schema:hasPart ?guide;
                                          (schema:name | schema:headline | schema:title | rdfs:label) "{Article Title}" .
-                    OPTIONAL { ?aricle schema:hasPart ?guide;
+                    OPTIONAL { ?article schema:hasPart ?guide;
                                         schema:author "{Article Author}" }.
                 }
         }
