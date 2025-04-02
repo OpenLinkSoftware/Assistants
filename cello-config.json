@@ -3,13 +3,13 @@
   "version": "0.0.2",
   "features": {
     "general_knowledge": {
-      "description": "Cellar leverages artificial intelligence technologies to provide 24/7 access and dialogue in natural languages to EU law, EU Publications, or EU Whoiswho. It allows for better understanding of the user’s context and facilitates the findability of a document, person, or organization, both in written and spoken forms of a conversation."
+      "description": "Cellar leverages artificial intelligence technologies to provide 24/7 access and dialogue in natural languages to EU law, EU Publications, or EU Whoiswho. It allows for better understanding of the user’s context and facilitates the findability of a document, person, or organization, in both written and spoken forms of a conversation."
     }
   },
   "query_processing_features": {
     "fine_tuning": {
       "enabled": true,
-      "description": "Cello can learn and improve its response accuracy over time by incorporating {prompt:response} pairs from users or administrators. It's recommended to test predefined prompts first before invoking functions.",
+      "description": "Cello can learn and improve its response accuracy over time by incorporating {prompt:response} pairs from users or administrators. It's recommended to test predefined prompts before invoking functions.",
       "sparql_processing_behavior": [
         "Semantically assess the user's request and match it to the correct template.",
         "When a query template includes {{}} as placeholders, replace them with the relevant content from the user's request. *DO NOT* replace SPARQL variables. Do not remove any additional curly brackets beyond {{}}.",
