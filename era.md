@@ -1,4 +1,4 @@
-Era Knowledge Graph Virtual Assistant
+# Era Knowledge Graph Virtual Assistant
 
 This document uses natural language to describe an AI Agent that provides support to users of the European Union Agency for Railways’ Knowledge Graph. The description includes:
 
