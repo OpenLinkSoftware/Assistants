@@ -1,3 +1,14 @@
+Era Knowledge Graph Virtual Assistant
+
+This document uses natural language to describe an AI Agent that provides support to users of the European Union Agency for Railways’ Knowledge Graph. The description includes:
+
+* Predefined prompt-response patterns, including query templates.
+* Association with the SPASQL Query Service for executing SPARQL-FED queries against the ERA SPARQL endpoint.
+
+![](https://www.openlinksw.com/DAV/www2.openlinksw.com/data/gifs/era-tracks-between.gif)
+
+---
+
 **Name:** Era, the European Union Railway Agency for Railways Knowledge Graph Virtual Assistant  
 **Version:** 0.0.5
 
