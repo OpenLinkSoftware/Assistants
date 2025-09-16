@@ -1,0 +1,3070 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLink AI Layer (OPAL) Functions (Tools) Playground</title>
+    <link rel="icon" type="image/png" href="https://www.openlinksw.com/skin/bootstrap-2022/images/favicon.png">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": "OpenLink AI Layer (OPAL) Functions (Tools) Playground",
+      "description": "An immersive, interactive playground to accelerate developer onboarding. Go from zero to a fully authenticated API call interactions in seconds.",
+      "datePublished": "2025-01-01",
+      "author": {
+        "@type": "Organization",
+        "name": "OpenLink Software",
+        "url": "https://www.openlinksw.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "OpenLink Software",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.openlinksw.com/skin/bootstrap-2022/images/favicon.png"
+        }
+      }
+    }
+    </script>
+    <style>
+        /* --- Reset & Global Styles --- */
+        :root {
+            --color-background: #121212;
+            --color-surface: #1e1e1e;
+            --color-primary: #4a90e2;
+            --color-primary-dark: #3a7bc8;
+            --color-secondary: #2a2a2a;
+            --color-text: #e0e0e0;
+            --color-text-muted: #888;
+            --color-border: #333;
+            --color-success: #28a745;
+            --color-error: #dc3545;
+            --color-get: #49cc90;
+            --color-post: #61affe;
+            --color-put: #fca130;
+            --color-delete: #f93e3e;
+            --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-family-sans);
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.6;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--color-text-muted);
+        }
+
+        a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border: none;
+            font-size: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--color-primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: var(--color-primary);
+            color: #fff;
+        }
+
+        .btn-run {
+            background-color: var(--color-success);
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .btn-run:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .btn-remove-url {
+            padding: 0.5rem 1rem;
+            background-color: var(--color-error);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-remove-url:hover {
+            opacity: 0.9;
+        }
+
+        /* --- Inputs & Forms --- */
+        .input-group {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .api-key-toggle-vis {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--color-text-muted);
+            padding: 5px;
+        }
+
+        .api-key-toggle-vis svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 1.5;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .api-key-toggle-vis:hover {
+            color: var(--color-text);
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--color-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text);
+            font-size: 1rem;
+            font-family: var(--font-family-sans);
+        }
+
+        .input-group input[readonly] {
+            background-color: #2a2a2a;
+            color: var(--color-text-muted);
+            cursor: not-allowed;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.5);
+        }
+
+        .input-group textarea {
+            min-height: 150px;
+            font-family: var(--font-family-mono);
+            resize: vertical;
+        }
+
+        /* --- Section 1: Hero --- */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 1)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%"><defs><pattern id="p" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="0.5" fill="%232a2a2a"/></pattern></defs><rect width="100%" height="100%" fill="url(%23p)"/></svg>');
+        }
+
+        .hero-content {
+            max-width: 800px;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            color: var(--color-text);
+        }
+
+        .hero-buttons .btn {
+            margin: 0 0.5rem;
+        }
+
+        /* --- Section 2: Quick Start Guide --- */
+        .quick-start {
+            padding: 6rem 0;
+        }
+
+        .quick-start h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .timeline {
+            position: relative;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            background-color: var(--color-border);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -2px;
+        }
+
+        .timeline-item {
+            padding: 1rem 3rem;
+            position: relative;
+            width: 50%;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            right: -12.5px;
+            background-color: var(--color-background);
+            border: 4px solid var(--color-primary);
+            top: 25px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .timeline-item.left {
+            left: 0;
+            padding-right: 50px;
+        }
+
+        .timeline-item.right {
+            left: 50%;
+            padding-left: 50px;
+        }
+
+        .timeline-item.right::after {
+            left: -12.5px;
+        }
+
+        .timeline-content {
+            padding: 1.5rem;
+            background-color: var(--color-surface);
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+        }
+
+        .timeline-content h3 {
+            color: var(--color-primary);
+        }
+
+        .response-viewer-wrapper {
+            position: relative;
+        }
+
+        .btn-toggle-token {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: var(--color-secondary);
+            color: var(--color-text-muted);
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .btn-toggle-token:hover {
+            background-color: #333;
+            color: var(--color-text);
+        }
+
+        .response-viewer {
+            margin-top: 1rem;
+            background-color: var(--color-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 1rem;
+            font-family: var(--font-family-mono);
+            white-space: pre-wrap;
+            word-break: break-all;
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+            resize: vertical;
+            color: var(--color-text-muted);
+        }
+
+        .response-viewer.success {
+            color: var(--color-text);
+            border-color: var(--color-success);
+        }
+
+        .response-viewer.error {
+            color: var(--color-error);
+            border-color: var(--color-error);
+        }
+
+        .code-snippet {
+            background-color: var(--color-secondary);
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: var(--font-family-mono);
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--color-text-muted);
+            border: 1px solid var(--color-border);
+        }
+
+        .state-display {
+            background: var(--color-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-family: var(--font-family-mono);
+            color: var(--color-success);
+            margin-top: 1rem;
+            word-break: break-all;
+        }
+
+        .state-display strong {
+            color: var(--color-text-muted);
+        }
+
+        /* --- Agent Creation Form Specifics --- */
+        #path-create .input-group p {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+            margin-bottom: 1rem;
+        }
+
+        #path-create .input-group textarea {
+            min-height: 250px;
+        }
+
+        /* --- Drop Zone Styles --- */
+        .drop-zone {
+            position: relative;
+            border: 2px dashed var(--color-border);
+            border-radius: 6px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--color-primary);
+            background-color: rgba(74, 144, 226, 0.1);
+        }
+
+        .drop-zone textarea {
+            border: none;
+            background-color: transparent;
+        }
+
+        .drop-zone textarea:focus {
+            box-shadow: none;
+        }
+
+        .drop-zone .drop-zone-prompt {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            pointer-events: none;
+            color: var(--color-text-muted);
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .drop-zone .drop-zone-prompt p {
+            margin-bottom: 0.5rem;
+        }
+
+        .drop-zone .drop-zone-prompt .btn {
+            pointer-events: all;
+        }
+
+        .drop-zone.has-content .drop-zone-prompt {
+            opacity: 0;
+        }
+
+        #markdown-file-input {
+            display: none;
+        }
+
+        /* --- Section 3: API Explorer --- */
+        .api-explorer {
+            padding: 6rem 0;
+        }
+
+        .api-explorer-layout {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .api-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 2rem;
+            align-self: flex-start;
+        }
+
+        .api-sidebar h3 {
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .api-sidebar ul {
+            list-style: none;
+        }
+
+        .api-sidebar li a {
+            display: block;
+            padding: 0.5rem 0;
+            color: var(--color-text-muted);
+            transition: color 0.2s;
+        }
+
+        .api-sidebar li a:hover,
+        .api-sidebar li a.active {
+            color: var(--color-primary);
+        }
+
+        .api-content {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .config-banner {
+            background-color: var(--color-surface);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--color-border);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .config-banner .input-group {
+            margin-bottom: 0;
+        }
+
+        .config-banner .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .api-category h2 {
+            font-size: 2rem;
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-border);
+            text-transform: capitalize;
+        }
+
+        .api-category:first-of-type h2 {
+            margin-top: 0;
+        }
+
+        .endpoint-card {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            background-color: var(--color-secondary);
+        }
+
+        .endpoint-header:hover {
+            background-color: #333;
+        }
+
+        .method-badge {
+            font-family: var(--font-family-mono);
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            margin-right: 1rem;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .method-badge.get {
+            background-color: var(--color-get);
+        }
+
+        .method-badge.post {
+            background-color: var(--color-post);
+        }
+
+        .method-badge.put {
+            background-color: var(--color-put);
+        }
+
+        .method-badge.delete {
+            background-color: var(--color-delete);
+        }
+
+        .endpoint-path {
+            font-family: var(--font-family-mono);
+            font-size: 1.1rem;
+            flex-grow: 1;
+        }
+
+        .endpoint-summary {
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+            margin-left: 1rem;
+            text-align: right;
+            flex-shrink: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .endpoint-body {
+            display: none;
+            padding: 1.5rem;
+        }
+
+        .endpoint-card.open .endpoint-body {
+            display: block;
+        }
+
+        .endpoint-section {
+            margin-top: 1.5rem;
+        }
+
+        .endpoint-section h4 {
+            color: var(--color-text-muted);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .param-table {
+            width: 100%;
+        }
+
+        .param-table .input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .param-table label {
+            flex-basis: 200px;
+            flex-shrink: 0;
+            margin-bottom: 0;
+            text-align: right;
+        }
+
+        .param-table label .param-type {
+            display: block;
+            font-weight: normal;
+            font-size: 0.8rem;
+            font-family: var(--font-family-mono);
+        }
+
+        .param-table input {
+            flex-grow: 1;
+        }
+
+        .required-dot {
+            color: var(--color-error);
+        }
+
+        .code-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: -1px;
+        }
+
+        .code-tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            color: var(--color-text-muted);
+            border: 1px solid transparent;
+            border-bottom: none;
+        }
+
+        .code-tab.active {
+            color: var(--color-primary);
+            background-color: var(--color-secondary);
+            border-color: var(--color-border);
+            border-radius: 6px 6px 0 0;
+        }
+
+        .code-snippet-container .code-snippet {
+            border-top-left-radius: 0;
+        }
+
+        .code-snippet-container .code-snippet:not(.active) {
+            display: none;
+        }
+
+        .try-it-live {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .try-it-live .btn-run {
+            padding: 0.75rem 2rem;
+        }
+
+        .try-it-live .response-viewer {
+            flex-grow: 1;
+            margin-top: 0;
+        }
+
+        /* --- Function Calling --- */
+        .function-selector {
+            background-color: var(--color-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .function-selector h5 {
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+            color: var(--color-text-muted);
+        }
+
+        .function-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .function-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .function-item input {
+            margin-right: 0.5rem;
+        }
+
+        .function-item label {
+            font-family: var(--font-family-mono);
+            word-break: break-all;
+        }
+
+
+        /* --- Copy Link Icon & Tooltip --- */
+        .copy-link-icon {
+            position: absolute;
+            left: -28px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            color: var(--color-text-muted);
+        }
+
+        h2:hover .copy-link-icon,
+        h3:hover .copy-link-icon,
+        .endpoint-header:hover .copy-link-icon {
+            opacity: 1;
+        }
+
+        .copy-link-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .copy-link-icon:hover {
+            color: var(--color-primary);
+        }
+
+        .copy-tooltip {
+            position: absolute;
+            background-color: var(--color-success);
+            color: #fff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            top: 50%;
+            left: -90px;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .copy-tooltip.visible {
+            opacity: 1;
+        }
+
+        /* --- Footer --- */
+        footer {
+            background-color: var(--color-surface);
+            color: var(--color-text-muted);
+            padding: 2rem 0;
+            margin-top: 4rem;
+            border-top: 1px solid var(--color-border);
+            font-size: 0.9rem;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--color-text-muted);
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--color-primary);
+        }
+
+        /* --- Responsive Styles --- */
+        @media (max-width: 992px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .timeline::after {
+                left: 31px;
+            }
+
+            .timeline-item {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+
+            .timeline-item.left,
+            .timeline-item.right {
+                left: 0;
+            }
+
+            .timeline-item::after,
+            .timeline-item.right::after {
+                left: 15px;
+            }
+
+            .config-banner {
+                grid-template-columns: 1fr;
+            }
+
+            .api-explorer-layout {
+                flex-direction: column;
+            }
+
+            .api-sidebar {
+                width: 100%;
+                position: static;
+                align-self: initial;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================================================== -->
+    <!-- SECTION 1: HERO INTRODUCTION                       -->
+    <!-- ================================================== -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>OpenLink AI Layer (OPAL) Functions (Tools) Playground</h1>
+            <p>An immersive, interactive playground to accelerate developer onboarding. Go from zero to a fully
+                authenticated API call interactions in seconds.</p>
+            <div class="hero-buttons">
+                <a href="#quick-start" class="btn btn-primary">Start the Developer Guide</a>
+                <a href="#api-explorer" class="btn btn-secondary">Jump to API Explorer</a>
+            </div>
+        </div>
+    </section>
+
+    <main class="container">
+        <!-- ================================================== -->
+        <!-- SECTION 2: INTERACTIVE QUICK START GUIDE           -->
+        <!-- ================================================== -->
+        <section id="quick-start" class="quick-start">
+            <h2 id="interactive-quick-start">Interactive Quick Start</h2>
+            <div class="timeline">
+                <!-- Step 1 -->
+                <div class="timeline-item left">
+                    <div class="timeline-content" id="qs-step-1-configure-endpoint">
+                        <h3>Step 1: Configure Your Endpoint</h3>
+                        <p>You can manually enter the endpoint URL below, or load it automatically from one or more
+                            OpenAPI specification files.</p>
+                        <div class="input-group">
+                            <label for="openapi-spec-urls">Load from OpenAPI Spec URL(s) (Optional)</label>
+                            <div id="openapi-urls-container">
+                                <!-- This will be populated by JavaScript -->
+                            </div>
+                            <button id="add-url-btn" class="btn btn-secondary" style="margin-top: 0.5rem;">Add
+                                URL</button>
+                        </div>
+                        <button id="load-spec-btn" class="btn btn-primary">Load Spec(s)</button>
+                        <p id="spec-status-msg" style="font-size: 0.9rem; margin-top: 0.5rem; min-height: 1.2em;"></p>
+                        <div class="input-group">
+                            <label for="qs-endpoint-url" id="qs-endpoint-url-label">Service Endpoint URL</label>
+                            <input type="text" id="qs-endpoint-url" class="global-state-input"
+                                data-state-key="endpointUrl" placeholder="https://your-api-server.com/api">
+                        </div>
+                    </div>
+                </div>
+                <!-- Step 2 -->
+                <div class="timeline-item right">
+                    <div class="timeline-content" id="qs-step-2-authenticate">
+                        <h3>Step 2: Authenticate & Create Session</h3>
+                        <p>Choose your authentication method to establish a new session.</p>
+                        <div class="auth-choice" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <input type="radio" id="auth-choice-bearer" name="auth-type" value="bearer" checked>
+                                <label for="auth-choice-bearer">
+                                    <a id="bearer-token-main-link" href="#" target="_blank"
+                                        rel="noopener noreferrer">Bearer Token</a>
+                                </label>
+                            </div>
+                            <div>
+                                <input type="radio" id="auth-choice-oauth" name="auth-type" value="oauth">
+                                <label for="auth-choice-oauth">OAuth 2.1</label>
+                            </div>
+                        </div>
+
+                        <div id="auth-bearer-view">
+                            <div class="input-group">
+                                <label for="qs-api-key">API Key (Bearer Token)</label>
+                                <input type="password" id="qs-api-key" class="global-state-input"
+                                    data-state-key="apiKey" placeholder="Paste your API key here">
+                                <button class="api-key-toggle-vis" title="Toggle API Key Visibility"></button>
+                            </div>
+                            <p id="bearer-token-link-container" style="font-size: 0.9rem; margin-top: -0.5rem;"></p>
+                            <button id="qs-auth-and-create" class="btn btn-primary">Create Session</button>
+                        </div>
+
+                        <div id="auth-oauth-view" style="display: none;">
+                            <div class="input-group" id="oauth-client-id-group" style="display: none;">
+                                <label for="oauth-client-id">Client ID</label>
+                                <input type="text" id="oauth-client-id" class="global-state-input"
+                                    data-state-key="oauthClientId" placeholder="Your OAuth Client ID">
+                            </div>
+                            <button id="oauth-login-btn" class="btn btn-primary">Login & Authorize</button>
+                            <button id="oauth-logout-btn" class="btn btn-secondary" style="display: none;">Logout /
+                                Reset</button>
+                            <p id="oauth-status-msg" style="font-size: 0.9rem; margin-top: 0.5rem; min-height: 1.2em;">
+                            </p>
+                        </div>
+
+                        <pre id="qs-auth-response"
+                            class="response-viewer">Session will be created upon authentication...</pre>
+                        <div id="qs-chat-id-display" class="state-display" style="display: none;">
+                            <strong>Session ID:</strong> <span id="qs-chat-id-value"></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Step 3 -->
+                <div class="timeline-item left">
+                    <div class="timeline-content" id="qs-step-3-list-resources">
+                        <h3>Step 3: List Available Functions & Agents</h3>
+                        <p>Retrieve the list of available functions and pre-configured agents for your session.</p>
+                        <button id="qs-run-list-resources" class="btn btn-primary">List Functions & Agents</button>
+                        <pre id="qs-list-response" class="response-viewer">Response will appear here...</pre>
+                    </div>
+                </div>
+                <!-- Step 4 -->
+                <div class="timeline-item right">
+                    <div class="timeline-content" id="qs-step-4-interact">
+                        <h3>Step 4: Configure Session</h3>
+                        <p>Choose your method: bind functions to your session, instantiate an existing agent, or create
+                            a new one.</p>
+
+                        <div class="session-choice"
+                            style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="radio" id="choice-functions" name="session-type" value="functions" checked
+                                    style="margin-right: 0.5rem;">
+                                <label for="choice-functions">Bind Functions</label>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <input type="radio" id="choice-instantiate" name="session-type" value="instantiate"
+                                    style="margin-right: 0.5rem;">
+                                <label for="choice-instantiate">Instantiate Agent</label>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <input type="radio" id="choice-create" name="session-type" value="create"
+                                    style="margin-right: 0.5rem;">
+                                <label for="choice-create">Create New Agent</label>
+                            </div>
+                        </div>
+
+                        <!-- Path 1: Bind Functions -->
+                        <div id="path-functions">
+                            <div id="qs-function-selector-container">
+                                <p style="color: var(--color-text-muted); font-style: italic;">Run Step 3 to load
+                                    functions.</p>
+                            </div>
+                            <button id="qs-run-bind-functions" class="btn btn-primary">Bind Selected Functions to
+                                Session</button>
+                        </div>
+
+                        <!-- Path 2: Instantiate Agent -->
+                        <div id="path-instantiate" style="display:none;">
+                            <div class="input-group">
+                                <label for="qs-agent-select">Select an Agent</label>
+                                <select id="qs-agent-select">
+                                    <option>Run Step 3 to load agents...</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="qs-alt-question">Initial Question (Optional)</label>
+                                <input type="text" id="qs-alt-question" placeholder="e.g., What are you?">
+                            </div>
+                            <button id="qs-run-instantiate-agent" class="btn btn-primary">Instantiate Agent</button>
+                        </div>
+
+                        <!-- Path 3: Create Agent -->
+                        <div id="path-create" style="display:none;">
+                            <div class="input-group">
+                                <label for="qs-agent-dav-url">WebDAV Save URL</label>
+                                <input type="text" id="qs-agent-dav-url"
+                                    value="https://linkeddata.uriburner.com/DAV/VAD/personal_assistant/json/">
+                                <p>The base URL of the WebDAV folder where the agent's .json file will be saved.</p>
+                            </div>
+                            <div class="input-group">
+                                <label for="qs-agent-id">Agent ID</label>
+                                <input type="text" id="qs-agent-id">
+                                <p>A short, unique name. The prefix <code>system-</code> will be added automatically.
+                                </p>
+                            </div>
+                            <div class="input-group">
+                                <label for="qs-agent-title">Agent Title</label>
+                                <input type="text" id="qs-agent-title">
+                            </div>
+                            <div class="input-group">
+                                <label for="qs-agent-version">Agent Version</label>
+                                <input type="text" id="qs-agent-version">
+                            </div>
+                            <div class="input-group">
+                                <label for="qs-agent-creation-date">Creation Date</label>
+                                <input type="text" id="qs-agent-creation-date" readonly>
+                            </div>
+                            <div class="input-group">
+                                <label for="qs-agent-model">Base Model</label>
+                                <select id="qs-agent-model">
+                                    <option>Run Step 3 to load models...</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="qs-agent-prompt">System Prompt (Configuration in Markdown)</label>
+                                <div id="markdown-drop-zone" class="drop-zone">
+                                    <textarea id="qs-agent-prompt"
+                                        placeholder="You are a helpful assistant that specializes in..."></textarea>
+                                    <div class="drop-zone-prompt">
+                                        <p>Drag & drop a .md file here, or</p>
+                                        <label for="markdown-file-input" class="btn btn-secondary">Click to
+                                            Upload</label>
+                                        <input type="file" id="markdown-file-input" accept=".md,.txt,text/markdown">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="qs-agent-function-selector-container">
+                                <p style="color: var(--color-text-muted); font-style: italic;">Run Step 3 to load
+                                    functions.</p>
+                            </div>
+                            <button id="qs-run-save-agent" class="btn btn-primary">Save Agent Configuration</button>
+                        </div>
+                        <pre id="qs-config-response" class="response-viewer">Response will appear here...</pre>
+                    </div>
+                </div>
+                <!-- Step 5 -->
+                <div class="timeline-item left">
+                    <div class="timeline-content" id="qs-step-5-modify-session">
+                        <h3>Step 5: Modify Session Settings</h3>
+                        <p>Now, let's customize our new session by changing its title and model, overwriting the
+                            defaults.</p>
+                        <div class="input-group">
+                            <label for="qs-update-title">New Title</label>
+                            <input type="text" id="qs-update-title" class="global-state-input" data-state-key="title">
+                        </div>
+                        <div class="input-group">
+                            <label for="qs-update-model">New Model</label>
+                            <select id="qs-update-model" class="global-state-input" data-state-key="model">
+                                <option>Run Step 3 to populate models...</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="qs-update-top-p">Top P</label>
+                            <input type="number" id="qs-update-top-p" min="0" max="1" step="0.1"
+                                class="global-state-input" data-state-key="top_p">
+                        </div>
+                        <div class="input-group">
+                            <label for="qs-update-temperature">Temperature</label>
+                            <input type="number" id="qs-update-temperature" min="0" max="2" step="0.1"
+                                class="global-state-input" data-state-key="temperature">
+                        </div>
+                        <div class="input-group">
+                            <label for="qs-update-model-key">Model API Key (Optional Override)</label>
+                            <input type="password" id="qs-update-model-key" class="global-state-input"
+                                data-state-key="modelApiKeyOverride" placeholder="Leave blank to use system default">
+                            <button class="api-key-toggle-vis" title="Toggle API Key Visibility">
+                            </button>
+                        </div>
+                        <button id="qs-run-update-topic" class="btn btn-primary">Update Session</button>
+                        <pre id="qs-update-topic-response" class="response-viewer">Response will appear here...</pre>
+                    </div>
+                </div>
+                <!-- Step 6 -->
+                <div class="timeline-item right">
+                    <div class="timeline-content" id="qs-step-6-ask-question">
+                        <h3>Step 6: Ask a Question</h3>
+                        <p>With our session configured, we can interact with it. Your `Session ID` and any selected
+                            functions are automatically included in the request.</p>
+                        <div class="input-group">
+                            <label for="qs-question">Your Question</label>
+                            <input type="text" id="qs-question" class="global-state-input" data-state-key="question">
+                        </div>
+                        <button id="qs-run-chat-completion" class="btn btn-primary">Send Question</button>
+                        <pre id="qs-chat-completion-response" class="response-viewer">Response will appear here...</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================== -->
+        <!-- SECTION 3: INTERACTIVE API EXPLORER                -->
+        <!-- ================================================== -->
+        <section id="api-explorer" class="api-explorer">
+            <h2 id="interactive-api-explorer" style="text-align: center; font-size: 2.5rem; margin-bottom: 4rem;">
+                Interactive API Explorer</h2>
+            <div class="config-banner">
+                <div class="input-group full-width">
+                    <label for="explorer-endpoint-url">Service Endpoint URL</label>
+                    <input type="text" id="explorer-endpoint-url" class="global-state-input"
+                        data-state-key="endpointUrl">
+                </div>
+                <div class="input-group">
+                    <label for="explorer-api-key">API Key (Bearer Token)</label>
+                    <input type="password" id="explorer-api-key" class="global-state-input" data-state-key="apiKey">
+                    <button class="api-key-toggle-vis" title="Toggle API Key Visibility">
+                    </button>
+                </div>
+                <div class="input-group">
+                    <label for="explorer-chat-id">Active Chat ID</label>
+                    <input type="text" id="explorer-chat-id" class="global-state-input" data-state-key="chatId">
+                </div>
+            </div>
+            <div class="api-explorer-layout">
+                <aside class="api-sidebar" id="api-sidebar-nav">
+                    <h3 id="api-categories">API Categories</h3>
+                    <ul id="sidebar-links">
+                    </ul>
+                </aside>
+                <div class="api-content" id="api-content-main">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <div class="copyright">
+                &copy; 2025 <a href="https://www.openlinksw.com">OpenLink Software</a>
+            </div>
+            <div class="footer-links">
+                <strong>Solutions:</strong>
+                <a href="https://opal.openlinksw.com">OPAL</a>
+                <a href="https://virtuoso.openlinksw.com">Virtuoso</a>
+                <strong>Alt. Reps:</strong>
+                <a href="https://www.openlinksw.com/data/html/?a=rss">RSS</a>
+                <a href="https://www.openlinksw.com/data/html/?a=atom">Atom</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            /**
+             * Main application object to encapsulate state, UI, API logic, and event handlers.
+             */
+            const App = {
+                // --- STATE MANAGEMENT ---
+                state: {
+                    endpointUrl: 'https://linkeddata.uriburner.com/chat/api',
+                    apiKey: '',
+                    chatId: '',
+                    isApiKeyVisible: false,
+                    model: 'gpt-4o-mini',
+                    title: "My Custom Chat",
+                    question: "Execute `select now()`",
+                    top_p: 0.5,
+                    temperature: 0.5,
+                    sessionFunctions: [],
+                    modelApiKeyOverride: '',
+                    authMethod: 'bearer',
+                    oauthClientId: '',
+                    openApiUrls: [],
+                    openApiSpec: null,
+                    oauthEndpoints: null,
+                },
+
+                // --- INITIALIZATION ---
+                init() {
+                    const persistedEndpointUrl = sessionStorage.getItem('opal.endpointUrl');
+                    if (persistedEndpointUrl) {
+                        this.state.endpointUrl = persistedEndpointUrl;
+                    }
+                    // Set default OpenAPI URLs based on current endpoint
+                    if (this.state.openApiUrls.length === 0) {
+                        this.state.openApiUrls = this.generateDefaultOpenApiUrls();
+                    }
+                    this.state.openApiSpec = this.getDefaultOpenApiSpec();
+                    this.cacheDOMElements();
+                    this.bindEventListeners();
+                    this.ui.renderApiExplorer();
+                    this.ui.renderOpenApiUrlInputs();
+                    this.ui.initializeApiKeyVisibilityToggle();
+                    this.ui.initializeLinkableHeaders();
+                    this.ui.updateAllStateInputs();
+                    this.ui.updateBearerTokenLink();
+                    this.handlers.handleOAuthCallback();
+                },
+
+                cacheDOMElements() {
+                    this.dom = {
+                        qs: {
+                            loadSpecBtn: document.getElementById('load-spec-btn'),
+                            addUrlBtn: document.getElementById('add-url-btn'),
+                            openapiUrlsContainer: document.getElementById('openapi-urls-container'),
+                            authAndCreateBtn: document.getElementById('qs-auth-and-create'),
+                            authResponseEl: document.getElementById('qs-auth-response'),
+                            chatIdDisplay: document.getElementById('qs-chat-id-display'),
+                            chatIdValue: document.getElementById('qs-chat-id-value'),
+                            runListResourcesBtn: document.getElementById('qs-run-list-resources'),
+                            listResponseEl: document.getElementById('qs-list-response'),
+                            runBindFunctionsBtn: document.getElementById('qs-run-bind-functions'),
+                            runInstantiateAgentBtn: document.getElementById('qs-run-instantiate-agent'),
+                            configResponseEl: document.getElementById('qs-config-response'),
+                            runSaveAgentBtn: document.getElementById('qs-run-save-agent'),
+                            runUpdateTopicBtn: document.getElementById('qs-run-update-topic'),
+                            updateTopicResponseEl: document.getElementById('qs-update-topic-response'),
+                            runChatCompletionBtn: document.getElementById('qs-run-chat-completion'),
+                            chatCompletionResponseEl: document.getElementById('qs-chat-completion-response'),
+                            oauthLoginBtn: document.getElementById('oauth-login-btn'),
+                            oauthLogoutBtn: document.getElementById('oauth-logout-btn'),
+                            oauthStatusMsg: document.getElementById('oauth-status-msg'),
+                            oauthClientIdGroup: document.getElementById('oauth-client-id-group'),
+                            apiKeyInput: document.getElementById('qs-api-key'),
+                            explorerApiKeyInput: document.getElementById('explorer-api-key'),
+                            bearerTokenLinkContainer: document.getElementById('bearer-token-link-container'),
+                            bearerTokenMainLink: document.getElementById('bearer-token-main-link'),
+                        },
+                        apiExplorer: {
+                            sidebar: document.getElementById('sidebar-links'),
+                            content: document.getElementById('api-content-main'),
+                        }
+                    };
+                },
+
+                bindEventListeners() {
+                    document.body.addEventListener('input', (e) => {
+                        if (e.target.classList.contains('global-state-input')) {
+                            const key = e.target.dataset.stateKey;
+                            const value = e.target.type === 'number' ? parseFloat(e.target.value) : e.target.value;
+                            this.updateState(key, value, e.target);
+                        }
+                    });
+
+                    this.dom.qs.loadSpecBtn.addEventListener('click', () => this.handlers.handleLoadOpenApiSpec());
+                    this.dom.qs.addUrlBtn.addEventListener('click', () => this.handlers.handleOpenApiUrlInteraction({ type: 'add' }));
+                    this.dom.qs.openapiUrlsContainer.addEventListener('click', (e) => this.handlers.handleOpenApiUrlInteraction(e));
+                    this.dom.qs.openapiUrlsContainer.addEventListener('input', (e) => this.handlers.handleOpenApiUrlInteraction(e));
+
+                    this.dom.qs.authAndCreateBtn.addEventListener('click', (e) => this.handlers.handleAuthAndCreate(e.target));
+                    this.dom.qs.runListResourcesBtn.addEventListener('click', (e) => this.handlers.handleListResources(e.target));
+                    this.dom.qs.runBindFunctionsBtn.addEventListener('click', (e) => this.handlers.handleBindFunctions(e.target));
+                    this.dom.qs.runInstantiateAgentBtn.addEventListener('click', (e) => this.handlers.handleInstantiateAgent(e.target));
+                    this.dom.qs.runUpdateTopicBtn.addEventListener('click', (e) => this.handlers.handleUpdateTopic(e.target));
+                    this.dom.qs.runChatCompletionBtn.addEventListener('click', (e) => this.handlers.handleChatCompletion(e.target));
+                    this.dom.qs.runSaveAgentBtn.addEventListener('click', (e) => this.handlers.handleSaveAgent(e.target));
+                    this.dom.qs.oauthLoginBtn.addEventListener('click', (e) => this.handlers.handleOAuthLogin(e.target));
+                    this.dom.qs.oauthLogoutBtn.addEventListener('click', () => this.handlers.resetAuthenticationState());
+
+                    this.ui.initializeAuthMethodToggle();
+                    this.ui.initializeStep4Choice();
+                    this.ui.initializeMarkdownUploader();
+                    this.ui.initializeFunctionBindingListener();
+                    this.dom.apiExplorer.content.addEventListener('click', (e) => this.handlers.handleApiExplorerInteraction(e));
+                    document.body.addEventListener('click', (e) => this.handlers.handleTokenToggle(e));
+                },
+
+                updateState(key, value, sourceElement = null, preserveOpenApiUrls = false) {
+                    const valueChanged = this.state[key] !== value;
+
+                    if (key === 'endpointUrl' && valueChanged) {
+                        sessionStorage.setItem('opal.endpointUrl', value);
+
+                        // Only regenerate URLs if we're not explicitly preserving them
+                        if (!preserveOpenApiUrls) {
+                            this.state.openApiUrls = this.generateDefaultOpenApiUrls();
+                            this.ui.renderOpenApiUrlInputs();
+                        }
+
+                        this.handlers.resetAuthenticationState(true);
+                        this.ui.updateBearerTokenLink();
+                    }
+
+                    this.state[key] = value;
+
+                    document.querySelectorAll('.global-state-input').forEach(input => {
+                        if (input.dataset.stateKey === key && input !== sourceElement) {
+                            input.value = value;
+                        }
+                    });
+
+                    if (valueChanged && ['chatId', 'model', 'question', 'title', 'top_p', 'temperature', 'modelApiKeyOverride', 'sessionFunctions'].includes(key)) {
+                        this.ui.syncApiCards();
+                    }
+                },
+
+                getDefaultOpenApiSpec() {
+                    return {
+                        "openapi": "3.0.0",
+                        "info": { "title": "OpenLink Chat Service", "version": "1.0.0" },
+                        "servers": [{ "url": "https://linkeddata.uriburner.com/chat/api" }],
+                        "paths": {
+                            "/listFunctions": { "get": { "operationId": "listFunctions", "tags": ["Function Tools"], "summary": "List available function tools.", "description": "Retrieve the list of available function tools.", "responses": { "200": { "description": "OK" } } } },
+                            "/listFineTune": { "get": { "operationId": "listFineTune", "tags": ["Chat Session Management"], "summary": "List available AI Agents.", "description": "Retrieve the list of available pre-configured AI Agents/Assistants.", "responses": { "200": { "description": "OK" } } } },
+                            "/createTopic": { "post": { "operationId": "createTopic", "tags": ["Chat Session Management"], "summary": "Create a new chat session.", "description": "Create a new empty chat session.", "security": [{ "VAL": [] }], "responses": { "200": { "description": "OK" } } } },
+                            "/getModels": { "get": { "operationId": "getModels", "tags": ["Model Management"], "summary": "List available LLMs.", "description": "List bound LLMs", "responses": { "200": { "description": "OK" } } } },
+                            "/chatTopic": { "post": { "operationId": "chatTopic-post", "tags": ["Chat Session Management"], "summary": "Update a chat session.", "description": "Update an existing chat session.", "parameters": [{ "name": "chat_id", "in": "query", "required": true, "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/chatTopicrequestBody" } } } }, "security": [{ "VAL": [] }], "responses": { "200": { "description": "OK" } } } },
+                            "/chatCompletion": { "post": { "operationId": "chatCompletion", "tags": ["Chat Interaction"], "summary": "Send a prompt to a session.", "description": "Send a prompt to a chat session, optionally with function tools.", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/chatCompletionrequestBody" } } } }, "security": [{ "VAL": [] }], "responses": { "200": { "description": "OK" } } } }
+                        },
+                        "components": {
+                            "schemas": {
+                                "chatCompletionrequestBody": { "type": "object", "properties": { "question": { "type": "string" }, "chat_id": { "type": "string" }, "model": { "type": "string" }, "apiKey": { "type": "string" }, "call": { "type": "array", "items": { "type": "string" } }, "alt_question": { "type": "string" } } },
+                                "chatTopicrequestBody": { "type": "object", "properties": { "title": { "type": "string" }, "model": { "type": "string" }, "apiKey": { "type": "string" }, "top_p": { "type": "number", "format": "float" }, "temperature": { "type": "number", "format": "float" }, "call": { "type": "array", "items": { "type": "string" } } } },
+                            }
+                        }
+                    };
+                },
+
+                generateDefaultOpenApiUrls() {
+                    try {
+                        const baseUrl = this.state.endpointUrl.replace(/\/+$/, ''); // Remove trailing slashes
+                        return [
+                            `${baseUrl}/openapi.yaml`,
+                            `${baseUrl.replace('/api', '')}/functions/openapi.yaml`
+                        ];
+                    } catch (e) {
+                        // Fallback to original defaults if URL parsing fails
+                        return [
+                            'https://linkeddata.uriburner.com/chat/api/openapi.yaml',
+                            'https://linkeddata.uriburner.com/chat/functions/openapi.yaml'
+                        ];
+                    }
+                },
+
+                async makeApiCall({ url, method, body = null, isAuthenticated = false, responseElement, triggerButton = null }) {
+                    const originalButtonText = triggerButton ? triggerButton.textContent : '';
+                    if (triggerButton) {
+                        triggerButton.disabled = true;
+                        triggerButton.textContent = 'Loading...';
+                    }
+                    this.ui.showLoading(responseElement);
+
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (isAuthenticated) {
+                        if (!this.state.apiKey) {
+                            const error = new Error('API Key is required. Please provide it in Step 2.');
+                            this.ui.showError(responseElement, error);
+                            if (triggerButton) {
+                                triggerButton.disabled = false;
+                                triggerButton.textContent = originalButtonText;
+                            }
+                            return { data: null, error };
+                        }
+                        headers['Authorization'] = `Bearer ${this.state.apiKey}`;
+                    }
+
+                    try {
+                        const response = await fetch(url, {
+                            method,
+                            headers,
+                            body: body ? JSON.stringify(body) : null
+                        });
+
+                        if (response.status === 204 || response.status === 201) {
+                            const successData = { status: response.status, statusText: response.statusText, data: null };
+                            this.ui.showSuccess(responseElement, successData);
+                            return { data: successData, error: null };
+                        }
+
+                        const responseText = await response.text();
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status} ${response.statusText}: ${responseText}`);
+                        }
+
+                        let responseData;
+                        try {
+                            responseData = JSON.parse(responseText);
+                        } catch (e) {
+                            responseData = responseText;
+                        }
+
+                        const resultData = { status: response.status, statusText: response.statusText, data: responseData };
+                        this.ui.showSuccess(responseElement, resultData);
+                        return { data: resultData, error: null };
+
+                    } catch (error) {
+                        this.ui.showError(responseElement, error);
+                        return { data: null, error };
+                    } finally {
+                        if (triggerButton) {
+                            triggerButton.disabled = false;
+                            triggerButton.textContent = originalButtonText;
+                        }
+                    }
+                },
+
+                handlers: {
+                    handleOpenApiUrlInteraction(event) {
+                        const target = event.target;
+                        if (event.type === 'add') {
+                            App.state.openApiUrls.push('');
+                        } else if (target?.matches('.btn-remove-url')) {
+                            const index = parseInt(target.dataset.index, 10);
+                            if (!isNaN(index)) {
+                                App.state.openApiUrls.splice(index, 1);
+                            }
+                        } else if (target?.matches('.openapi-spec-url')) {
+                            const index = parseInt(target.dataset.index, 10);
+                            if (!isNaN(index)) {
+                                App.state.openApiUrls[index] = target.value;
+                            }
+                            return; // No need to re-render on every keystroke
+                        }
+                        App.ui.renderOpenApiUrlInputs();
+                    },
+
+                    async handleLoadOpenApiSpec() {
+                        const statusMsg = document.getElementById('spec-status-msg');
+                        const endpointLabel = document.getElementById('qs-endpoint-url-label');
+                        const originalLabelText = "Service Endpoint URL";
+                        const urls = App.state.openApiUrls.map(url => url.trim()).filter(Boolean);
+
+                        if (urls.length === 0) {
+                            statusMsg.textContent = 'Please enter at least one URL.';
+                            statusMsg.style.color = 'var(--color-error)';
+                            return;
+                        }
+
+                        statusMsg.textContent = `Loading ${urls.length} spec(s)...`;
+                        statusMsg.style.color = 'var(--color-text-muted)';
+
+                        try {
+                            const promises = urls.map(async (url) => {
+                                const response = await fetch(url);
+                                if (!response.ok) throw new Error(`HTTP error for ${url}! Status: ${response.status}`);
+                                const text = await response.text();
+                                return (url.endsWith('.yaml') || url.endsWith('.yml')) ? jsyaml.load(text) : JSON.parse(text);
+                            });
+
+                            const specs = await Promise.all(promises);
+                            const mergedSpec = App.utils.mergeOpenApiSpecs(specs);
+                            if (!mergedSpec) throw new Error('No valid specifications found.');
+
+                            App.state.openApiSpec = mergedSpec;
+
+                            const serverUrl = mergedSpec?.servers?.[0]?.url;
+                            if (serverUrl) {
+                                const absoluteUrl = new URL(serverUrl, urls[0]).href;
+
+                                // Preserve user's OpenAPI URLs before state update
+                                const userOpenApiUrls = [...App.state.openApiUrls];
+
+                                // App.updateState('endpointUrl', absoluteUrl);
+                                App.updateState('endpointUrl', absoluteUrl, null, true);
+
+                                // Restore user's OpenAPI URLs after state update
+                                // App.state.openApiUrls = userOpenApiUrls;
+                                // App.ui.renderOpenApiUrlInputs();
+
+                                const serviceTitle = mergedSpec?.info?.title;
+                                endpointLabel.innerHTML = serviceTitle ?
+                                    `${originalLabelText} <span style="color: var(--color-success);">(from <em>${serviceTitle}</em>)</span>` :
+                                    originalLabelText;
+                            }
+
+                            statusMsg.textContent = `✅ Spec(s) loaded! Endpoint updated.`;
+                            statusMsg.style.color = 'var(--color-success)';
+
+                        } catch (error) {
+                            console.error('Failed to load OpenAPI spec(s):', error);
+                            statusMsg.textContent = `❌ Error: ${error.message}`;
+                            statusMsg.style.color = 'var(--color-error)';
+                            endpointLabel.textContent = originalLabelText;
+                        }
+                    },
+
+                    async handleAuthAndCreate(button) {
+                        const { data } = await App.makeApiCall({
+                            url: `${App.state.endpointUrl}/createTopic`,
+                            method: 'POST',
+                            isAuthenticated: true,
+                            responseElement: App.dom.qs.authResponseEl,
+                            triggerButton: button
+                        });
+
+                        if (data?.data?.chat_id) {
+                            const newChatId = data.data.chat_id;
+                            App.updateState('chatId', newChatId);
+                            App.dom.qs.chatIdValue.textContent = newChatId;
+                            App.dom.qs.chatIdDisplay.style.display = 'block';
+                            App.ui.scrollToStep('qs-step-3-list-resources');
+                        } else {
+                            App.dom.qs.chatIdDisplay.style.display = 'none';
+                        }
+                    },
+
+                    async handleListResources(button) {
+                        const responseEl = App.dom.qs.listResponseEl;
+                        button.disabled = true;
+                        button.textContent = 'Loading...';
+                        responseEl.textContent = 'Loading functions and agents...';
+
+                        try {
+                            const [functionsResponse, agentsResponse] = await Promise.all([
+                                fetch(`${App.state.endpointUrl}/listFunctions`),
+                                fetch(`${App.state.endpointUrl}/listFineTune`)
+                            ]);
+
+                            if (!functionsResponse.ok) throw new Error(`Functions fetch failed: ${functionsResponse.statusText}`);
+                            if (!agentsResponse.ok) throw new Error(`Agents fetch failed: ${agentsResponse.statusText}`);
+
+                            const functionsJson = await functionsResponse.json();
+                            const agentsJson = await agentsResponse.json();
+
+                            const functions = Array.isArray(functionsJson) ? functionsJson : functionsJson.functions || [];
+                            const agents = Array.isArray(agentsJson) ? agentsJson : agentsJson.agents || [];
+
+                            App.ui.populateFunctionCheckboxes(functions, 'qs-function-selector-container');
+                            App.ui.populateFunctionCheckboxes(functions, 'qs-agent-function-selector-container');
+                            App.ui.populateModelDropdown('qs-update-model');
+                            App.ui.populateModelDropdown('qs-agent-model');
+                            App.ui.populateAgentDropdown(agents);
+
+                            responseEl.textContent = `Successfully loaded ${functions.length} function(s) and ${agents.length} agent(s).`;
+                            responseEl.className = 'response-viewer success';
+                        } catch (error) {
+                            responseEl.textContent = `Error: ${error.message}`;
+                            responseEl.className = 'response-viewer error';
+                        } finally {
+                            button.disabled = false;
+                            button.textContent = 'List Functions & Agents';
+                        }
+                    },
+
+                    async handleBindFunctions(button) {
+                        if (!App.state.chatId) {
+                            App.ui.showError(App.dom.qs.configResponseEl, new Error('Please create a session in Step 2 to get a Session ID.'));
+                            return;
+                        }
+                        const body = {
+                            title: App.state.title,
+                            model: App.state.model,
+                            call: App.state.sessionFunctions.map(f => f.function)
+                        };
+                        await App.makeApiCall({
+                            url: `${App.state.endpointUrl}/chatTopic?chat_id=${App.state.chatId}`,
+                            method: 'POST',
+                            isAuthenticated: true,
+                            body,
+                            responseElement: App.dom.qs.configResponseEl,
+                            triggerButton: button
+                        });
+                    },
+
+                    async handleInstantiateAgent(button) {
+                        const agentConfigId = document.getElementById('qs-agent-select').value;
+                        const altQuestion = document.getElementById('qs-alt-question').value;
+
+                        if (!agentConfigId) {
+                            App.ui.showError(App.dom.qs.configResponseEl, new Error('Please select an agent.'));
+                            return;
+                        }
+
+                        const body = { model: App.state.model, chat_id: agentConfigId };
+                        if (altQuestion.trim()) body.alt_question = altQuestion;
+
+                        const { data } = await App.makeApiCall({
+                            url: `${App.state.endpointUrl}/chatCompletion`,
+                            method: 'POST',
+                            isAuthenticated: true,
+                            body,
+                            responseElement: App.dom.qs.configResponseEl,
+                            triggerButton: button
+                        });
+
+                        if (data?.data?.chat_id) {
+                            const newChatId = data.data.chat_id;
+                            App.updateState('chatId', newChatId);
+                            App.dom.qs.chatIdValue.textContent = newChatId;
+                            App.dom.qs.chatIdDisplay.style.display = 'block';
+                        }
+                    },
+
+                    async handleSaveAgent(button) {
+                        const davUrl = document.getElementById('qs-agent-dav-url').value;
+                        const agentPrompt = document.getElementById('qs-agent-prompt').value;
+                        const responseEl = App.dom.qs.configResponseEl;
+
+                        const metadata = {
+                            id: document.getElementById('qs-agent-id').value.trim(),
+                            title: document.getElementById('qs-agent-title').value.trim(),
+                            version: document.getElementById('qs-agent-version').value.trim(),
+                            creationDate: document.getElementById('qs-agent-creation-date').value.trim(),
+                            functions: App.state.sessionFunctions
+                        };
+
+                        if (!davUrl || !agentPrompt || !metadata.id || !metadata.title || !metadata.version) {
+                            App.ui.showError(responseEl, new Error('WebDAV URL, Agent ID, Title, Version, and System Prompt are all required.'));
+                            return;
+                        }
+
+                        try {
+                            const agentJson = App.utils.transformMarkdownToAgentJson(agentPrompt, metadata);
+                            const finalUrl = `${davUrl.replace(/\/$/, '')}/${metadata.id}.json`;
+
+                            const { data: result } = await App.makeApiCall({
+                                url: finalUrl,
+                                method: 'PUT',
+                                isAuthenticated: true,
+                                body: agentJson,
+                                responseElement: responseEl,
+                                triggerButton: button
+                            });
+
+                            App.ui.displayAgentCreationResult(responseEl, result, agentJson, metadata);
+                            if (result) {
+                                await App.ui.populateAgentDropdown();
+                            }
+                        } catch (error) {
+                            console.error("Halting agent creation due to parsing error:", error);
+                            App.ui.showError(responseEl, new Error(`Parsing Error: ${error.message}`));
+                        }
+                    },
+
+                    async handleUpdateTopic(button) {
+                        if (!App.state.chatId) {
+                            App.ui.showError(App.dom.qs.updateTopicResponseEl, new Error('Please create a session first to get a Session ID.'));
+                            return;
+                        }
+                        const body = {
+                            title: App.state.title,
+                            model: App.state.model,
+                            top_p: App.state.top_p,
+                            temperature: App.state.temperature
+                        };
+                        if (App.state.modelApiKeyOverride.trim()) {
+                            body.apiKey = App.state.modelApiKeyOverride;
+                        }
+                        await App.makeApiCall({
+                            url: `${App.state.endpointUrl}/chatTopic?chat_id=${App.state.chatId}`,
+                            method: 'POST',
+                            isAuthenticated: true,
+                            body,
+                            responseElement: App.dom.qs.updateTopicResponseEl,
+                            triggerButton: button
+                        });
+                    },
+
+                    async handleChatCompletion(button) {
+                        if (!App.state.chatId) {
+                            App.ui.showError(App.dom.qs.chatCompletionResponseEl, new Error('Please create a session first to get a Session ID.'));
+                            return;
+                        }
+                        const body = {
+                            question: App.state.question,
+                            chat_id: App.state.chatId,
+                            model: App.state.model
+                        };
+                        if (App.state.sessionFunctions.length > 0) {
+                            body.call = App.state.sessionFunctions.map(f => f.function);
+                        }
+                        if (App.state.modelApiKeyOverride.trim()) {
+                            body.apiKey = App.state.modelApiKeyOverride;
+                        }
+                        await App.makeApiCall({
+                            url: `${App.state.endpointUrl}/chatCompletion`,
+                            method: 'POST',
+                            isAuthenticated: true,
+                            body,
+                            responseElement: App.dom.qs.chatCompletionResponseEl,
+                            triggerButton: button
+                        });
+                    },
+
+                    async handleOAuthLogin(button) {
+                        const statusEl = App.dom.qs.oauthStatusMsg;
+                        const clientIdGroup = App.dom.qs.oauthClientIdGroup;
+                        let clientId = '';
+                        const originalButtonText = button.textContent;
+
+                        try {
+                            button.disabled = true;
+                            button.textContent = 'Discovering...';
+                            statusEl.textContent = "Discovering OAuth endpoints...";
+                            statusEl.style.color = 'var(--color-text-muted)';
+                            clientIdGroup.style.display = 'none';
+
+                            const origin = new URL(App.state.endpointUrl).origin;
+                            const endpoints = await App.utils.discoverOAuthEndpoints(origin, statusEl);
+                            App.state.oauthEndpoints = endpoints;
+
+                            if (endpoints.registration_endpoint) {
+                                button.textContent = 'Registering...';
+                                statusEl.textContent = "Dynamically registering client...";
+                                const regResponse = await fetch(endpoints.registration_endpoint, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        client_name: "OPAL Playground",
+                                        redirect_uris: [window.location.origin + window.location.pathname],
+                                        grant_types: ["authorization_code"],
+                                        token_endpoint_auth_method: "none"
+                                    })
+                                });
+                                if (!regResponse.ok) throw new Error('Dynamic client registration failed.');
+                                const regData = await regResponse.json();
+                                clientId = regData.client_id;
+                                App.updateState('oauthClientId', clientId);
+                                statusEl.textContent = "Dynamic client registered successfully.";
+                            } else {
+                                statusEl.textContent = "Provider does not support dynamic registration. Please enter a Client ID.";
+                                clientIdGroup.style.display = 'block';
+                                clientId = App.state.oauthClientId;
+                                if (!clientId) {
+                                    throw new Error("Client ID is required as provider does not support dynamic registration.");
+                                }
+                            }
+
+                            const { verifier, challenge } = await App.utils.generatePkceChallenge();
+
+                            const nonce = App.utils.generateRandomString();
+                            const stateObject = {
+                                nonce: nonce,
+                                origin: App.state.endpointUrl
+                            };
+                            const state = btoa(JSON.stringify(stateObject));
+                            sessionStorage.setItem('oauth_state_nonce', nonce);
+
+                            sessionStorage.setItem('oauth_pkce_verifier', verifier);
+                            sessionStorage.setItem('oauth_client_id', clientId);
+
+                            const params = new URLSearchParams({
+                                response_type: 'code',
+                                client_id: clientId,
+                                redirect_uri: window.location.origin + window.location.pathname,
+                                scope: 'openid profile email',
+                                state: state,
+                                code_challenge: challenge,
+                                code_challenge_method: 'S256'
+                            });
+
+                            button.textContent = 'Redirecting...';
+                            statusEl.textContent = "Redirecting to login...";
+                            window.location.href = `${endpoints.authorization_endpoint}?${params.toString()}`;
+                        } catch (error) {
+                            statusEl.textContent = `Error: ${error.message}`;
+                            statusEl.style.color = 'var(--color-error)';
+                            button.disabled = false;
+                            button.textContent = originalButtonText;
+                        }
+                    },
+
+                    resetAuthenticationState(isAutomatic = false) {
+                        App.updateState('apiKey', '');
+                        App.updateState('chatId', '');
+                        App.updateState('oauthClientId', '');
+                        App.state.oauthEndpoints = null;
+                        App.utils.clearOAuthSession();
+                        App.ui.resetApiKeyState(isAutomatic);
+                    },
+
+                    async handleOAuthCallback() {
+                        const params = new URLSearchParams(window.location.search);
+                        const code = params.get('code');
+                        const encodedState = params.get('state');
+
+                        if (!code || !encodedState) return;
+
+                        history.replaceState(null, '', window.location.pathname);
+                        const statusEl = App.dom.qs.oauthStatusMsg;
+
+                        let stateObject;
+                        try {
+                            stateObject = JSON.parse(atob(encodedState));
+                        } catch (e) {
+                            statusEl.textContent = "Error: Invalid state parameter format.";
+                            statusEl.style.color = 'var(--color-error)';
+                            App.utils.clearOAuthSession();
+                            return;
+                        }
+
+                        const { nonce, origin } = stateObject;
+                        const storedNonce = sessionStorage.getItem('oauth_state_nonce');
+
+                        if (nonce !== storedNonce) {
+                            statusEl.textContent = "Error: Invalid state nonce. Possible CSRF attack.";
+                            statusEl.style.color = 'var(--color-error)';
+                            App.utils.clearOAuthSession();
+                            return;
+                        }
+
+                        if (!origin) {
+                            statusEl.textContent = "Error: Origin URL not found in state parameter.";
+                            statusEl.style.color = 'var(--color-error)';
+                            App.utils.clearOAuthSession();
+                            return;
+                        }
+
+                        const verifier = sessionStorage.getItem('oauth_pkce_verifier');
+                        const clientId = sessionStorage.getItem('oauth_client_id');
+                        if (!verifier || !clientId) {
+                            statusEl.textContent = "Error: OAuth session data (verifier or client ID) not found.";
+                            statusEl.style.color = 'var(--color-error)';
+                            App.utils.clearOAuthSession();
+                            return;
+                        }
+
+                        try {
+                            statusEl.textContent = "Exchanging authorization code for token...";
+                            statusEl.style.color = 'var(--color-text-muted)';
+
+                            // Use the current endpoint URL from state, not the one from OAuth state
+                            const currentOrigin = new URL(App.state.endpointUrl).origin;
+                            const endpoints = await App.utils.discoverOAuthEndpoints(currentOrigin, statusEl);
+
+                            const tokenResponse = await fetch(endpoints.token_endpoint, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                body: new URLSearchParams({
+                                    grant_type: 'authorization_code',
+                                    code: code,
+                                    redirect_uri: window.location.origin + window.location.pathname,
+                                    client_id: clientId,
+                                    code_verifier: verifier
+                                })
+                            });
+
+                            if (!tokenResponse.ok) {
+                                const errorData = await tokenResponse.json();
+                                throw new Error(errorData.error_description || 'Token exchange failed.');
+                            }
+
+                            const tokenData = await tokenResponse.json();
+                            // App.updateState('apiKey', tokenData.access_token);
+                            App.updateState('apiKey', tokenData.access_token);
+
+                            App.updateState('oauthClientId', clientId);
+                            App.ui.setOAuthSuccessState();
+
+                            App.dom.qs.authAndCreateBtn.click();
+
+                        } catch (error) {
+                            statusEl.textContent = `Error: ${error.message}`;
+                            statusEl.style.color = 'var(--color-error)';
+                        } finally {
+                            App.utils.clearOAuthSession();
+                        }
+                    },
+
+                    handleApiExplorerInteraction(event) {
+                        const header = event.target.closest('.endpoint-header');
+                        if (header) {
+                            const card = header.parentElement;
+                            card.classList.toggle('open');
+                            if (card.classList.contains('open')) {
+                                App.ui.updateCodeSnippetsForCard(card);
+                            }
+                            return;
+                        }
+
+                        const runBtn = event.target.closest('.btn-run');
+                        if (runBtn) {
+                            const card = runBtn.closest('.endpoint-card');
+                            const { path, method, requiresAuth, params, body } = App.utils.getEndpointData(card.id);
+                            const responseEl = card.querySelector('.response-viewer');
+
+                            let fullUrl = `${App.state.endpointUrl}${path}`;
+                            const queryParams = new URLSearchParams(params.query);
+                            if (queryParams.toString()) {
+                                fullUrl += `?${queryParams.toString()}`;
+                            }
+
+                            App.makeApiCall({
+                                url: fullUrl,
+                                method: method.toUpperCase(),
+                                isAuthenticated: requiresAuth,
+                                body,
+                                responseElement: responseEl,
+                                triggerButton: runBtn
+                            });
+                            App.ui.updateCodeSnippetsForCard(card);
+                            return;
+                        }
+
+                        const tab = event.target.closest('.code-tab');
+                        if (tab) {
+                            const card = tab.closest('.endpoint-card');
+                            const lang = tab.dataset.lang;
+                            card.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+                            card.querySelectorAll('.code-snippet').forEach(s => s.classList.remove('active'));
+                            tab.classList.add('active');
+                            card.querySelector(`.code-snippet[data-lang="${lang}"]`).classList.add('active');
+                        }
+                    },
+
+                    handleTokenToggle(event) {
+                        if (event.target.matches('.btn-toggle-token')) {
+                            const btn = event.target;
+                            const wrapper = btn.closest('.response-viewer-wrapper');
+                            if (!wrapper) return;
+                            const responseViewer = wrapper.querySelector('.response-viewer');
+                            if (!responseViewer) return;
+
+                            if (btn.dataset.state === 'masked') {
+                                responseViewer.textContent = responseViewer.dataset.unmasked;
+                                btn.textContent = 'Hide Token';
+                                btn.dataset.state = 'unmasked';
+                            } else {
+                                responseViewer.textContent = responseViewer.dataset.masked;
+                                btn.textContent = 'Show Token';
+                                btn.dataset.state = 'masked';
+                            }
+                        }
+                    }
+                },
+
+                ui: {
+                    showLoading(element) {
+                        element.textContent = 'Loading...';
+                        element.className = 'response-viewer';
+                        element.style.display = 'block';
+                    },
+
+                    showError(element, error) {
+                        element.textContent = `Error: ${error.message}`;
+                        element.className = 'response-viewer error';
+                        element.style.display = 'block';
+                    },
+
+                    showSuccess(element, result) {
+                        element.className = 'response-viewer success';
+                        element.style.display = 'block';
+
+                        if (result.status === 204 || result.status === 201) {
+                            element.textContent = `Success: ${result.status} ${result.statusText}`;
+                            return;
+                        }
+
+                        const displayString = typeof result.data === 'object' ? JSON.stringify(result.data, null, 2) : String(result.data);
+                        const tokenRegex = /("Authorization":\s*"Bearer\s+)([^"]+)"/i;
+                        const match = displayString.match(tokenRegex);
+
+                        if (match) {
+                            const maskedString = displayString.replace(match[2], '[...masked for security...]');
+                            let wrapper = element.closest('.response-viewer-wrapper');
+                            if (!wrapper) {
+                                wrapper = document.createElement('div');
+                                wrapper.className = 'response-viewer-wrapper';
+                                element.parentNode.insertBefore(wrapper, element);
+                                wrapper.appendChild(element);
+
+                                const toggleBtn = document.createElement('button');
+                                toggleBtn.className = 'btn-toggle-token';
+                                wrapper.appendChild(toggleBtn);
+                            }
+                            const toggleBtn = wrapper.querySelector('.btn-toggle-token');
+                            element.dataset.unmasked = displayString;
+                            element.dataset.masked = maskedString;
+                            element.textContent = maskedString;
+                            toggleBtn.textContent = 'Show Token';
+                            toggleBtn.dataset.state = 'masked';
+                        } else {
+                            element.textContent = displayString;
+                        }
+                    },
+
+                    updateAllStateInputs() {
+                        document.querySelectorAll('.global-state-input').forEach(input => {
+                            const key = input.dataset.stateKey;
+                            if (App.state.hasOwnProperty(key)) {
+                                input.value = App.state[key];
+                            }
+                        });
+                    },
+
+                    renderOpenApiUrlInputs() {
+                        const container = App.dom.qs.openapiUrlsContainer;
+                        container.innerHTML = '';
+                        App.state.openApiUrls.forEach((url, index) => {
+                            const row = document.createElement('div');
+                            row.className = 'openapi-url-row';
+                            row.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem;';
+                            row.innerHTML = `
+                                <input type="text" class="openapi-spec-url" value="${url}" data-index="${index}">
+                                <button class="btn-remove-url" data-index="${index}" style="flex-shrink: 0; display: ${App.state.openApiUrls.length > 1 ? 'inline-block' : 'none'};">Remove</button>
+                            `;
+                            container.appendChild(row);
+                        });
+                    },
+
+                    renderApiExplorer() {
+                        const sidebar = App.dom.apiExplorer.sidebar;
+                        const content = App.dom.apiExplorer.content;
+                        sidebar.innerHTML = '';
+                        content.innerHTML = '';
+
+                        const endpointsByTag = {};
+                        for (const [path, methods] of Object.entries(App.state.openApiSpec.paths)) {
+                            for (const [method, details] of Object.entries(methods)) {
+                                const tag = details.tags?.[0] || 'default';
+                                if (!endpointsByTag[tag]) endpointsByTag[tag] = [];
+                                endpointsByTag[tag].push({ path, method, ...details });
+                            }
+                        }
+
+                        Object.keys(endpointsByTag).sort().forEach(tag => {
+                            const categoryId = `category-${tag.replace(/\s+/g, '-').toLowerCase()}`;
+                            sidebar.innerHTML += `<li><a href="#${categoryId}">${tag.replace(/_/g, ' ')}</a></li>`;
+                            let categoryHtml = `<div id="${categoryId}" class="api-category"><h2>${tag.replace(/_/g, ' ')}</h2>`;
+
+                            endpointsByTag[tag].forEach((endpoint, index) => {
+                                const endpointId = `${categoryId}-endpoint-${index}`;
+                                const summary = endpoint.summary || endpoint.description.split('\n')[0];
+
+                                categoryHtml += `
+                                <div class="endpoint-card" id="${endpointId}">
+                                    <div class="endpoint-header">
+                                        <span class="method-badge ${endpoint.method}">${endpoint.method.toUpperCase()}</span>
+                                        <span class="endpoint-path">${endpoint.path}</span>
+                                        <span class="endpoint-summary" title="${endpoint.description}">${summary}</span>
+                                    </div>
+                                    <div class="endpoint-body">
+                                        <p>${endpoint.description}</p>
+                                        <div class="endpoint-section params-section">
+                                            ${(endpoint.parameters && endpoint.parameters.length > 0) || endpoint.requestBody ? '<h4>Parameters</h4>' : ''}
+                                            <div class="param-table">
+                                                ${(endpoint.parameters || []).map(p => `
+                                                    <div class="input-group">
+                                                        <label for="${endpointId}-${p.name}">
+                                                            ${p.name} ${p.required ? '<span class="required-dot">*</span>' : ''}
+                                                            <span class="param-type">${p.schema.type} (${p.in})</span>
+                                                        </label>
+                                                        <input type="text" id="${endpointId}-${p.name}" data-param-name="${p.name}" data-param-in="${p.in}"
+                                                            value="${p.required ? App.utils.getSensibleDefault(p.schema, p.name) : ''}"
+                                                            placeholder="${p.schema.type}">
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                            ${endpoint.requestBody ? `
+                                                <h4>Request Body</h4>
+                                                <div class="input-group">
+                                                    <textarea id="${endpointId}-body" class="request-body-input">${App.utils.generateBodyTemplate(endpoint.requestBody.content['application/json']?.schema?.$ref, endpoint.operationId)}</textarea>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                        <div class="endpoint-section">
+                                            <h4>Try It Live</h4>
+                                            <div class="try-it-live">
+                                                <button class="btn btn-run" data-endpoint-id="${endpointId}">Try It Live</button>
+                                                <pre class="response-viewer">Response will appear here...</pre>
+                                            </div>
+                                        </div>
+                                        <div class="endpoint-section">
+                                            <h4>Code Examples</h4>
+                                            <div class="code-tabs">
+                                                <div class="code-tab active" data-lang="curl">cURL</div>
+                                                <div class="code-tab" data-lang="javascript">JavaScript</div>
+                                                <div class="code-tab" data-lang="python">Python</div>
+                                                <div class="code-tab" data-lang="java">Java</div>
+                                            </div>
+                                            <div class="code-snippet-container">
+                                                <pre class="code-snippet active" data-lang="curl"></pre>
+                                                <pre class="code-snippet" data-lang="javascript"></pre>
+                                                <pre class="code-snippet" data-lang="python"></pre>
+                                                <pre class="code-snippet" data-lang="java"></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            });
+                            categoryHtml += `</div>`;
+                            content.innerHTML += categoryHtml;
+                        });
+                        this.syncApiCards();
+                    },
+
+                    syncApiCards() {
+                        const syncCard = (path, method, updateFn) => {
+                            const card = Array.from(document.querySelectorAll('.endpoint-card')).find(c =>
+                                c.querySelector('.endpoint-path')?.textContent === path &&
+                                c.querySelector('.method-badge')?.textContent.toLowerCase() === method
+                            );
+                            if (card) updateFn(card);
+                        };
+
+                        syncCard('/chatCompletion', 'post', (card) => {
+                            const textarea = card.querySelector('.request-body-input');
+                            if (!textarea) return;
+                            try {
+                                const bodyJson = JSON.parse(textarea.value);
+                                bodyJson.chat_id = App.state.chatId || App.utils.getSensibleDefault({ type: 'string' }, 'chat_id');
+                                bodyJson.model = App.state.model;
+                                bodyJson.question = App.state.question;
+                                if (App.state.sessionFunctions.length > 0) {
+                                    bodyJson.call = App.state.sessionFunctions.map(f => f.function);
+                                } else {
+                                    delete bodyJson.call;
+                                }
+                                if (App.state.modelApiKeyOverride.trim()) {
+                                    bodyJson.apiKey = App.state.isApiKeyVisible ? App.state.modelApiKeyOverride : '[...masked for security...]';
+                                } else {
+                                    delete bodyJson.apiKey;
+                                }
+                                textarea.value = JSON.stringify(bodyJson, null, 2);
+                            } catch (e) { /* Ignore invalid user JSON */ }
+                        });
+
+                        syncCard('/chatTopic', 'post', (card) => {
+                            const chatIdInput = card.querySelector('input[data-param-name="chat_id"]');
+                            if (chatIdInput) chatIdInput.value = App.state.chatId;
+
+                            const textarea = card.querySelector('.request-body-input');
+                            if (!textarea) return;
+                            try {
+                                const bodyJson = JSON.parse(textarea.value);
+                                bodyJson.title = App.state.title;
+                                bodyJson.model = App.state.model;
+                                bodyJson.top_p = App.state.top_p;
+                                bodyJson.temperature = App.state.temperature;
+                                if (App.state.modelApiKeyOverride.trim()) {
+                                    bodyJson.apiKey = App.state.isApiKeyVisible ? App.state.modelApiKeyOverride : '[...masked for security...]';
+                                } else {
+                                    delete bodyJson.apiKey;
+                                }
+                                textarea.value = JSON.stringify(bodyJson, null, 2);
+                            } catch (e) { /* Ignore invalid user JSON */ }
+                        });
+                    },
+
+                    updateCodeSnippetsForCard(cardElement) {
+                        const endpointId = cardElement.id;
+                        if (!endpointId) return;
+                        const endpointData = App.utils.getEndpointData(endpointId);
+                        ['curl', 'javascript', 'python', 'java'].forEach(lang => {
+                            const snippet = App.utils.generateCodeSnippet(lang, endpointData);
+                            const snippetElement = cardElement.querySelector(`.code-snippet[data-lang="${lang}"]`);
+                            if (snippetElement) snippetElement.textContent = snippet;
+                        });
+                    },
+
+                    async populateModelDropdown(selectId) {
+                        const selectEl = document.getElementById(selectId);
+                        if (!selectEl) return;
+                        selectEl.innerHTML = '<option>Loading models...</option>';
+                        try {
+                            const response = await fetch(`${App.state.endpointUrl}/getModels`);
+                            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                            const models = await response.json();
+
+                            if (Array.isArray(models) && models.length > 0) {
+                                selectEl.innerHTML = '';
+                                models.forEach(model => {
+                                    const modelId = model.id || model.model;
+                                    if (modelId) {
+                                        const option = document.createElement('option');
+                                        option.value = modelId;
+                                        option.textContent = modelId;
+                                        selectEl.appendChild(option);
+                                    }
+                                });
+                                if (selectEl.querySelector(`option[value="${App.state.model}"]`)) {
+                                    selectEl.value = App.state.model;
+                                } else if (selectEl.querySelector('option[value="gpt-4o-mini"]')) {
+                                    selectEl.value = 'gpt-4o-mini';
+                                }
+                                App.updateState('model', selectEl.value);
+                            } else {
+                                throw new Error('Model data is not a valid array.');
+                            }
+                        } catch (error) {
+                            console.error(`Could not populate model dropdown for #${selectId}:`, error);
+                            const parent = selectEl.parentElement;
+                            if (selectEl.tagName === 'SELECT') {
+                                const input = document.createElement('input');
+                                input.type = 'text';
+                                input.id = selectId;
+                                input.value = App.state.model;
+                                parent.replaceChild(input, selectEl);
+                                const label = parent.querySelector('label');
+                                if (label) label.innerHTML += ' (manual entry)';
+                            }
+                        }
+                    },
+
+                    async populateAgentDropdown(agents) {
+                        const selectEl = document.getElementById('qs-agent-select');
+                        selectEl.innerHTML = '<option>Loading agents...</option>';
+                        try {
+                            if (!agents) {
+                                const response = await fetch(`${App.state.endpointUrl}/listFineTune`);
+                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                agents = await response.json();
+                            }
+                            if (Array.isArray(agents) && agents.length > 0) {
+                                selectEl.innerHTML = '';
+                                agents.forEach(agent => {
+                                    if (agent.chat_id && agent.title) {
+                                        const option = document.createElement('option');
+                                        option.value = agent.chat_id;
+                                        option.textContent = agent.title;
+                                        selectEl.appendChild(option);
+                                    }
+                                });
+                            } else {
+                                selectEl.innerHTML = '<option>No agents found.</option>';
+                            }
+                        } catch (error) {
+                            console.error('Could not populate agent dropdown:', error);
+                            selectEl.innerHTML = '<option>Error loading agents.</option>';
+                        }
+                    },
+
+                    populateFunctionCheckboxes(functions, containerId) {
+                        const container = document.getElementById(containerId);
+                        if (!container) return;
+                        if (!Array.isArray(functions) || functions.length === 0) {
+                            container.innerHTML = '<p><i>No functions available to bind.</i></p>';
+                            return;
+                        }
+                        container.innerHTML = `
+                            <div class="function-selector">
+                                <h5>Bind Functions to Session</h5>
+                                <div class="function-list">
+                                    ${functions.map(funcObj => `
+                                        <div class="function-item">
+                                            <input type="checkbox" id="${containerId}-func-${funcObj.name}" value="${funcObj.function}" data-title="${funcObj.title}">
+                                            <label for="${containerId}-func-${funcObj.name}" title="${funcObj.function}">${funcObj.title}</label>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>`;
+                    },
+
+                    displayAgentCreationResult(responseEl, result, originalJson, metadata) {
+                        responseEl.innerHTML = '';
+                        responseEl.className = 'response-viewer';
+                        responseEl.style.textAlign = 'left';
+
+                        const isSuccess = result && (result.status === 201 || result.status === 204);
+
+                        const originalView = document.createElement('div');
+                        originalView.id = 'originalView';
+                        const statusMessage = document.createElement('p');
+                        statusMessage.style.marginBottom = '1rem';
+                        if (isSuccess) {
+                            statusMessage.innerHTML = `✅ <strong>Success: ${result.status} ${result.statusText}</strong>. Agent configuration saved.`;
+                            responseEl.classList.add('success');
+                        } else {
+                            statusMessage.innerHTML = `❌ <strong>API call failed.</strong> You can manually save the following JSON to a file.`;
+                            responseEl.classList.add('error');
+                        }
+                        originalView.appendChild(statusMessage);
+
+                        const originalButtonContainer = document.createElement('div');
+                        originalButtonContainer.style.marginBottom = '1rem';
+                        const copyOriginalBtn = document.createElement('button');
+                        copyOriginalBtn.textContent = 'Copy Internal JSON';
+                        copyOriginalBtn.className = 'btn btn-secondary';
+                        copyOriginalBtn.addEventListener('click', () => App.utils.copyToClipboard(JSON.stringify(originalJson, null, 2), copyOriginalBtn));
+                        originalButtonContainer.appendChild(copyOriginalBtn);
+                        originalView.appendChild(originalButtonContainer);
+
+                        const originalDetails = document.createElement('details');
+                        originalDetails.open = true;
+                        originalDetails.innerHTML = `<summary>Generated JSON Payload (Internal Format)</summary><pre>${JSON.stringify(originalJson, null, 2)}</pre>`;
+                        originalView.appendChild(originalDetails);
+                        responseEl.appendChild(originalView);
+
+                        if (isSuccess) {
+                            const gptView = document.createElement('div');
+                            gptView.id = 'gptView';
+                            gptView.style.display = 'none';
+
+                            try {
+                                const agentPrompt = document.getElementById('qs-agent-prompt').value;
+                                const openAIJson = App.utils.transformMarkdownToOpenAIJson(agentPrompt, metadata);
+                                const gptJsonString = JSON.stringify(openAIJson, null, 2);
+
+                                gptView.innerHTML = `<p style="margin-bottom: 1rem;">✅ <strong>OpenAI-compatible JSON Generated Successfully</strong></p>`;
+                                const gptButtonContainer = document.createElement('div');
+                                gptButtonContainer.style.marginBottom = '1rem';
+
+                                const copyGptBtn = document.createElement('button');
+                                copyGptBtn.textContent = 'Copy CustomGPT JSON';
+                                copyGptBtn.className = 'btn btn-secondary';
+                                copyGptBtn.addEventListener('click', () => App.utils.copyToClipboard(gptJsonString, copyGptBtn));
+                                gptButtonContainer.appendChild(copyGptBtn);
+
+                                const backBtn = document.createElement('button');
+                                backBtn.textContent = 'Back to Internal Format';
+                                backBtn.className = 'btn btn-secondary';
+                                backBtn.addEventListener('click', () => {
+                                    gptView.style.display = 'none';
+                                    originalView.style.display = 'block';
+                                });
+                                gptButtonContainer.appendChild(backBtn);
+                                gptView.appendChild(gptButtonContainer);
+
+                                const gptDetails = document.createElement('details');
+                                gptDetails.open = true;
+                                gptDetails.innerHTML = `<summary>Generated JSON Payload (OpenAI CustomGPT Format)</summary><pre>${gptJsonString}</pre>`;
+                                gptView.appendChild(gptDetails);
+                                responseEl.appendChild(gptView);
+
+                                const exportBtn = document.createElement('button');
+                                exportBtn.textContent = 'Export for CustomGPT';
+                                exportBtn.className = 'btn btn-secondary';
+                                exportBtn.addEventListener('click', () => {
+                                    originalView.style.display = 'none';
+                                    gptView.style.display = 'block';
+                                });
+                                originalButtonContainer.appendChild(exportBtn);
+
+                            } catch (e) {
+                                console.error("Error during CustomGPT conversion:", e);
+                                const exportBtn = document.createElement('button');
+                                exportBtn.textContent = 'Export Failed';
+                                exportBtn.className = 'btn btn-secondary';
+                                exportBtn.disabled = true;
+                                exportBtn.title = `Error during CustomGPT conversion: ${e.message}`;
+                                originalButtonContainer.appendChild(exportBtn);
+                            }
+                        }
+                    },
+
+                    setOAuthSuccessState() {
+                        const statusEl = App.dom.qs.oauthStatusMsg;
+                        statusEl.textContent = "✅ Successfully authenticated via OAuth. Creating session...";
+                        statusEl.style.color = 'var(--color-success)';
+
+                        [App.dom.qs.apiKeyInput, App.dom.qs.explorerApiKeyInput].forEach(input => {
+                            input.value = "Authenticated via OAuth";
+                            input.readOnly = true;
+                            input.style.cursor = "default";
+                            input.style.fontStyle = "italic";
+                        });
+                        document.getElementById('auth-choice-bearer').checked = true;
+                        document.getElementById('auth-bearer-view').style.display = 'block';
+                        document.getElementById('auth-oauth-view').style.display = 'none';
+                        App.dom.qs.oauthLoginBtn.style.display = 'none';
+                        App.dom.qs.oauthLogoutBtn.style.display = 'inline-block';
+                    },
+
+                    resetApiKeyState(isAutomatic = false) {
+                        [App.dom.qs.apiKeyInput, App.dom.qs.explorerApiKeyInput].forEach(input => {
+                            input.value = "";
+                            input.readOnly = false;
+                            input.style.cursor = "text";
+                            input.style.fontStyle = "normal";
+                            input.type = 'password';
+                        });
+                        App.dom.qs.chatIdDisplay.style.display = 'none';
+                        App.dom.qs.oauthLoginBtn.style.display = 'inline-block';
+                        App.dom.qs.oauthLogoutBtn.style.display = 'none';
+                        const statusEl = App.dom.qs.oauthStatusMsg;
+                        if (isAutomatic) {
+                            statusEl.textContent = "Endpoint changed. Please re-authenticate.";
+                            statusEl.style.color = 'var(--color-text-muted)';
+                        } else {
+                            statusEl.textContent = "Logged out.";
+                        }
+                    },
+
+                    scrollToStep(elementId) {
+                        const element = document.getElementById(elementId);
+                        if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    },
+
+                    updateBearerTokenLink() {
+                        const container = App.dom.qs.bearerTokenLinkContainer;
+                        const mainLink = App.dom.qs.bearerTokenMainLink;
+                        try {
+                            const origin = new URL(App.state.endpointUrl).origin;
+                            const tokenUrl = `${origin}/oauth/applications.vsp`;
+
+                            container.innerHTML = `Need a token? <a href="${tokenUrl}" target="_blank" rel="noopener noreferrer">Get one here</a>.`;
+
+                            if (mainLink) {
+                                mainLink.href = tokenUrl;
+                            }
+                        } catch (e) {
+                            container.innerHTML = 'Enter a valid Service Endpoint URL to get a token link.';
+                            if (mainLink) {
+                                mainLink.href = '#';
+                            }
+                        }
+                    },
+
+                    initializeApiKeyVisibilityToggle() {
+                        const eyeIcon = `<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+                        const eyeOffIcon = `<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+                        const toggleButtons = document.querySelectorAll('.api-key-toggle-vis');
+                        const apiKeyInputs = document.querySelectorAll('input[data-state-key="apiKey"], input[data-state-key="modelApiKeyOverride"]');
+
+                        const updateIconsAndInputs = () => {
+                            toggleButtons.forEach(btn => btn.innerHTML = App.state.isApiKeyVisible ? eyeIcon : eyeOffIcon);
+                            apiKeyInputs.forEach(input => {
+                                if (!input.readOnly) {
+                                    input.type = App.state.isApiKeyVisible ? 'text' : 'password';
+                                }
+                            });
+                            this.syncApiCards();
+                        };
+
+                        toggleButtons.forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                App.state.isApiKeyVisible = !App.state.isApiKeyVisible;
+                                updateIconsAndInputs();
+                            });
+                        });
+                        updateIconsAndInputs();
+                    },
+
+                    initializeLinkableHeaders() {
+                        const linkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path></svg>`;
+                        document.querySelectorAll('main h2, main h3, .endpoint-header').forEach(header => {
+                            if (!header.id) {
+                                const cleanId = header.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                                if (cleanId) header.id = cleanId;
+                            }
+                            if (header.id) {
+                                const link = document.createElement('a');
+                                link.href = `#${header.id}`;
+                                link.className = 'copy-link-icon';
+                                link.title = 'Copy link to this section';
+                                link.innerHTML = linkIconSvg;
+                                header.appendChild(link);
+                            }
+                        });
+
+                        document.body.addEventListener('click', e => {
+                            const linkIcon = e.target.closest('.copy-link-icon');
+                            if (linkIcon) {
+                                e.preventDefault();
+                                const url = new URL(linkIcon.href, window.location.href).toString();
+                                navigator.clipboard.writeText(url).then(() => {
+                                    let tooltip = document.querySelector('.copy-tooltip');
+                                    if (!tooltip) {
+                                        tooltip = document.createElement('span');
+                                        tooltip.className = 'copy-tooltip';
+                                        tooltip.textContent = 'Copied!';
+                                        document.body.appendChild(tooltip);
+                                    }
+                                    const rect = linkIcon.getBoundingClientRect();
+                                    tooltip.style.top = `${rect.top + window.scrollY + rect.height / 2}px`;
+                                    tooltip.style.left = `${rect.left + window.scrollX - 70}px`;
+                                    tooltip.classList.add('visible');
+                                    setTimeout(() => tooltip.classList.remove('visible'), 2000);
+                                });
+                            }
+                        });
+                    },
+
+                    initializeFunctionBindingListener() {
+                        const updateFunctions = (container) => {
+                            const functions = Array.from(container.querySelectorAll('.function-item input:checked'))
+                                .map(cb => ({ function: cb.value, title: cb.dataset.title }));
+                            App.updateState('sessionFunctions', functions);
+
+                            if (container.id === 'qs-function-selector-container') {
+                                const responseEl = App.dom.qs.configResponseEl;
+                                if (functions.length > 0) {
+                                    const functionTitles = functions.map(f => `  - ${f.title}`).join('\n');
+                                    responseEl.textContent = `Functions selected (click "Bind" to apply):\n${functionTitles}`;
+                                    responseEl.className = 'response-viewer';
+                                } else {
+                                    responseEl.textContent = 'No functions are currently selected.';
+                                    responseEl.className = 'response-viewer';
+                                }
+                            }
+                        };
+                        ['qs-function-selector-container', 'qs-agent-function-selector-container'].forEach(id => {
+                            const container = document.getElementById(id);
+                            if (container) {
+                                container.addEventListener('change', e => {
+                                    if (e.target.type === 'checkbox') updateFunctions(container);
+                                });
+                            }
+                        });
+                    },
+
+                    initializeStep4Choice() {
+                        const paths = {
+                            functions: document.getElementById('path-functions'),
+                            instantiate: document.getElementById('path-instantiate'),
+                            create: document.getElementById('path-create')
+                        };
+                        document.querySelector('.session-choice').addEventListener('change', (e) => {
+                            Object.values(paths).forEach(p => p.style.display = 'none');
+                            const selectedPath = paths[e.target.value];
+                            if (selectedPath) {
+                                selectedPath.style.display = 'block';
+                                if (e.target.value === 'create') {
+                                    const idInput = document.getElementById('qs-agent-id');
+                                    if (!idInput.value) idInput.value = 'my-new-agent';
+                                    const titleInput = document.getElementById('qs-agent-title');
+                                    if (!titleInput.value) titleInput.value = 'My New Agent';
+                                    const versionInput = document.getElementById('qs-agent-version');
+                                    if (!versionInput.value) versionInput.value = '1.0.0';
+                                    document.getElementById('qs-agent-creation-date').value = new Date().toISOString();
+                                }
+                            }
+                        });
+                    },
+
+                    initializeMarkdownUploader() {
+                        const dropZone = document.getElementById('markdown-drop-zone');
+                        const fileInput = document.getElementById('markdown-file-input');
+                        const promptTextarea = document.getElementById('qs-agent-prompt');
+                        const readFileContent = (file) => {
+                            if (file && (file.type === 'text/markdown' || file.type === 'text/plain' || file.name.endsWith('.md'))) {
+                                const reader = new FileReader();
+                                reader.onload = (e) => {
+                                    promptTextarea.value = e.target.result;
+                                    dropZone.classList.add('has-content');
+                                };
+                                reader.readAsText(file);
+                            } else {
+                                alert('Please upload a valid Markdown (.md) or text (.txt) file.');
+                            }
+                        };
+                        promptTextarea.addEventListener('input', () => dropZone.classList.toggle('has-content', !!promptTextarea.value));
+                        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+                        dropZone.addEventListener('dragenter', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+                        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+                        dropZone.addEventListener('drop', (e) => {
+                            e.preventDefault();
+                            dropZone.classList.remove('drag-over');
+                            if (e.dataTransfer.files.length) readFileContent(e.dataTransfer.files[0]);
+                        });
+                        fileInput.addEventListener('change', (e) => { if (e.target.files.length) readFileContent(e.target.files[0]); });
+                    },
+
+                    initializeAuthMethodToggle() {
+                        const bearerView = document.getElementById('auth-bearer-view');
+                        const oauthView = document.getElementById('auth-oauth-view');
+                        document.querySelector('.auth-choice').addEventListener('change', (e) => {
+                            const isBearer = e.target.value === 'bearer';
+                            bearerView.style.display = isBearer ? 'block' : 'none';
+                            oauthView.style.display = isBearer ? 'none' : 'block';
+                            App.updateState('authMethod', e.target.value);
+                        });
+                    }
+                },
+
+                utils: {
+                    getSensibleDefault(schema, name) {
+                        if (name === 'chat_id') return App.state.chatId || `your_chat_id`;
+                        if (name === 'question') return App.state.question;
+                        if (name === 'model') return App.state.model;
+                        if (name === 'title') return App.state.title;
+                        if (name === 'top_p') return App.state.top_p;
+                        if (name === 'temperature') return App.state.temperature;
+                        if (schema.type === 'integer' || schema.type === 'number') return 10;
+                        if (schema.type === 'boolean') return true;
+                        if (name.toLowerCase().includes('id')) return `your_${name.replace(/([A-Z])/g, '_$1').toLowerCase()}`;
+                        return 'example_value';
+                    },
+
+                    generateBodyTemplate(schemaRef, operationId) {
+                        const template = {};
+                        const schemaName = schemaRef?.split('/').pop();
+                        const schema = schemaName ? App.state.openApiSpec.components.schemas[schemaName] : null;
+
+                        if (schema && schema.properties) {
+                            const propertiesToExclude = ['alt_question', 'apiKey', 'call', 'fine_tune'];
+                            for (const [prop, propSchema] of Object.entries(schema.properties)) {
+                                if (!propertiesToExclude.includes(prop)) {
+                                    template[prop] = this.getSensibleDefault(propSchema, prop);
+                                }
+                            }
+                        }
+                        return JSON.stringify(template, null, 2);
+                    },
+
+                    getEndpointData(endpointId) {
+                        const card = document.getElementById(endpointId);
+                        const path = card.querySelector('.endpoint-path').textContent;
+                        const method = card.querySelector('.method-badge').textContent.toLowerCase();
+                        const endpointSpec = App.state.openApiSpec.paths[path][method];
+                        const requiresAuth = !!endpointSpec.security;
+
+                        const params = { query: {}, header: {}, path: {} };
+                        card.querySelectorAll('input[data-param-name]').forEach(input => {
+                            if (input.value) params[input.dataset.paramIn][input.dataset.paramName] = input.value;
+                        });
+
+                        let body = null;
+                        const bodyTextarea = card.querySelector('.request-body-input');
+                        if (bodyTextarea?.value) {
+                            try { body = JSON.parse(bodyTextarea.value); } catch (e) { body = {}; }
+                        }
+
+                        if (body) {
+                            if (body.hasOwnProperty('apiKey') && App.state.modelApiKeyOverride) {
+                                body.apiKey = App.state.modelApiKeyOverride;
+                            }
+                            if (body.hasOwnProperty('chat_id')) {
+                                body.chat_id = document.getElementById('explorer-chat-id').value;
+                            }
+                        }
+
+                        if (endpointSpec.operationId === 'chatCompletion' && App.state.sessionFunctions.length > 0) {
+                            if (!body) body = {};
+                            body.call = App.state.sessionFunctions.map(f => f.function);
+                        }
+
+                        return { path, method, requiresAuth, params, body };
+                    },
+
+                    generateCodeSnippet(language, endpointData) {
+                        const { path, method, requiresAuth, params, body } = endpointData;
+
+                        // Create a sanitized copy of the body for display purposes.
+                        let sanitizedBody = null;
+                        if (body) {
+                            // Use JSON stringify/parse for a deep clone to avoid mutating the original object.
+                            sanitizedBody = JSON.parse(JSON.stringify(body));
+                            // Check for and mask the apiKey property if it exists and has a value.
+                            if (sanitizedBody.hasOwnProperty('apiKey') && sanitizedBody.apiKey) {
+                                sanitizedBody.apiKey = '[...masked for security...]';
+                            }
+                        }
+
+                        let fullUrl = `${App.state.endpointUrl}${path}`;
+                        const queryParams = new URLSearchParams(params.query);
+                        if (queryParams.toString()) fullUrl += `?${queryParams.toString()}`;
+
+                        const headers = { 'Content-Type': 'application/json' };
+                        if (requiresAuth) {
+                            const bearerToken = App.state.isApiKeyVisible ? (App.state.apiKey || 'YOUR_API_KEY') : '[...masked for security...]';
+                            headers['Authorization'] = `Bearer ${bearerToken}`;
+                        }
+
+                        switch (language) {
+                            case 'curl':
+                                let curlCmd = `curl -X ${method.toUpperCase()} "${fullUrl}" \\\n`;
+                                for (const [key, value] of Object.entries(headers)) {
+                                    curlCmd += `     -H "${key}: ${value}" \\\n`;
+                                }
+                                if (sanitizedBody) curlCmd += `     -d '${JSON.stringify(sanitizedBody, null, 2)}'`;
+                                return curlCmd.replace(/ \\\n$/, '');
+                            case 'javascript':
+                                return `const url = "${fullUrl}";
+const options = {
+    method: '${method.toUpperCase()}',
+    headers: ${JSON.stringify(headers, null, 4)}
+};
+${sanitizedBody ? `options.body = JSON.stringify(${JSON.stringify(sanitizedBody, null, 4)});` : ''}
+
+fetch(url, options)
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(error => console.error('Error:', error));`;
+                            case 'python':
+                                return `import requests
+import json
+
+url = "${fullUrl}"
+headers = ${JSON.stringify(headers, null, 4)}
+${sanitizedBody ? `payload = ${JSON.stringify(sanitizedBody, null, 4)}` : 'payload = {}'}
+
+response = requests.${method}(url, headers=headers${sanitizedBody ? ', json=payload' : ''})
+
+print(response.json())`;
+                            case 'java':
+                                return `import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+public class ApiCall {
+    public static void main(String[] args) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                .uri(URI.create("${fullUrl}"))
+                .header("Content-Type", "application/json")
+                ${requiresAuth ? `.header("Authorization", "Bearer ${App.state.isApiKeyVisible ? (App.state.apiKey || 'YOUR_API_KEY') : '[...masked for security...]'} ")` : ''};
+
+        ${sanitizedBody ? `String requestBody = """
+${JSON.stringify(sanitizedBody, null, 2)}
+                """;
+        requestBuilder.method("${method.toUpperCase()}", HttpRequest.BodyPublishers.ofString(requestBody));`
+                                        : `requestBuilder.${method.toUpperCase()}();`}
+
+        HttpRequest request = requestBuilder.build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        System.out.println(response.body());
+    }
+}`;
+                        }
+                        return '';
+                    },
+
+                    mergeOpenApiSpecs(specs) {
+                        if (!specs || specs.length === 0) return null;
+                        const baseSpec = JSON.parse(JSON.stringify(specs[0]));
+                        for (let i = 1; i < specs.length; i++) {
+                            const specToMerge = specs[i];
+                            if (specToMerge.paths) Object.assign(baseSpec.paths, specToMerge.paths);
+                            if (specToMerge.components) Object.assign(baseSpec.components, specToMerge.components);
+                        }
+                        return baseSpec;
+                    },
+
+                    extractFunctionsFromSpec(spec) {
+                        const functions = [];
+                        if (!spec || !spec.paths) return functions;
+                        for (const [path, methods] of Object.entries(spec.paths)) {
+                            for (const [method, details] of Object.entries(methods)) {
+                                if (details.operationId) {
+                                    functions.push({
+                                        name: details.operationId,
+                                        function: details.operationId,
+                                        title: details.summary || details.description || details.operationId
+                                    });
+                                }
+                            }
+                        }
+                        return functions;
+                    },
+
+                    copyToClipboard(text, button) {
+                        navigator.clipboard.writeText(text).then(() => {
+                            const originalText = button.textContent;
+                            button.textContent = 'Copied!';
+                            setTimeout(() => { button.textContent = originalText; }, 2000);
+                        });
+                    },
+
+                    async discoverOAuthEndpoints(origin, statusEl) {
+                        if (App.state.oauthEndpoints) {
+                            return App.state.oauthEndpoints;
+                        }
+                        const discoveryUrl = `${origin}/.well-known/openid-configuration`;
+
+                        const processResponse = async (response, isProxy = false) => {
+                            let config;
+                            try {
+                                config = await response.json();
+                            } catch (e) {
+                                throw new Error("The server's discovery document is not valid JSON.");
+                            }
+
+                            if (!config.authorization_endpoint || !config.token_endpoint) {
+                                throw new Error("The discovery document is valid but is missing required OAuth endpoint information.");
+                            }
+
+                            if (isProxy && statusEl) {
+                                statusEl.textContent = "Discovery successful via proxy.";
+                                statusEl.style.color = 'var(--color-success)';
+                            }
+                            return config;
+                        };
+
+                        try {
+                            const response = await fetch(discoveryUrl);
+                            if (response.ok) {
+                                return await processResponse(response);
+                            } else {
+                                if (response.status === 404) {
+                                    throw new Error(`Server returned 404 (Not Found). Please check if the Endpoint URL is correct and if it supports OpenID discovery.`);
+                                } else if (response.status >= 500) {
+                                    throw new Error(`The server experienced an internal error (Status: ${response.status}). Please try again later.`);
+                                } else {
+                                    throw new Error(`Could not fetch discovery document (HTTP Status: ${response.status})`);
+                                }
+                            }
+                        } catch (error) {
+                            if (error instanceof TypeError) {
+                                if (statusEl) {
+                                    statusEl.textContent = "Direct connection failed due to server's CORS policy. Retrying via proxy...";
+                                    statusEl.style.color = 'var(--color-text-muted)';
+                                }
+                                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(discoveryUrl)}`;
+                                try {
+                                    const proxyResponse = await fetch(proxyUrl);
+                                    if (proxyResponse.ok) {
+                                        return await processResponse(proxyResponse, true);
+                                    } else {
+                                        if (proxyResponse.status === 404) {
+                                            throw new Error(`Proxy request failed: Server returned 404 (Not Found). The Endpoint URL appears to be incorrect.`);
+                                        } else {
+                                            throw new Error(`Proxy request failed with HTTP Status: ${proxyResponse.status}`);
+                                        }
+                                    }
+                                } catch (proxyError) {
+                                    throw new Error(`Failed to connect via proxy. Please check your network connection. Details: ${proxyError.message}`);
+                                }
+                            }
+                            throw error;
+                        }
+                    },
+
+                    generateRandomString(length = 40) {
+                        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+                        let result = '';
+                        const randomValues = new Uint8Array(length);
+                        window.crypto.getRandomValues(randomValues);
+                        for (let i = 0; i < length; i++) {
+                            result += charset[randomValues[i] % charset.length];
+                        }
+                        return result;
+                    },
+
+                    async generatePkceChallenge() {
+                        const verifier = this.generateRandomString(128);
+                        const encoder = new TextEncoder();
+                        const data = encoder.encode(verifier);
+                        const digest = await window.crypto.subtle.digest('SHA-256', data);
+                        const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+                            .replace(/\+/g, '-')
+                            .replace(/\//g, '_')
+                            .replace(/=/g, '');
+                        return { verifier, challenge };
+                    },
+
+                    clearOAuthSession() {
+                        sessionStorage.removeItem('oauth_state_nonce');
+                        sessionStorage.removeItem('oauth_pkce_verifier');
+                        sessionStorage.removeItem('oauth_client_id');
+                    },
+
+                    transformMarkdownToAgentJson(markdownText, metadata) {
+                        try {
+                            const lines = markdownText.split('\n');
+                            let agentName = metadata.title || (markdownText.match(/\*\*Name:\*\*\s*(.*)/) || [])[1]?.trim() || "AI Assistant";
+                            let agentVersion = metadata.version || (markdownText.match(/\*\*Version:\*\*\s*(.*)/) || [])[1]?.trim() || "1.0.0";
+                            const rootKey = agentName.toLowerCase().replace(/\s+/g, '_');
+                            const root = { [rootKey]: { name: agentName, version: agentVersion, features: {}, commands: { prefix: "/", commands: {} }, rules: [], preferences: {}, formats: {}, init: "" } };
+                            const agent = root[rootKey];
+                            let currentSection = '', currentSubSection = '', currentSubSubSection = '', currentSkill = null, currentPrompt = null, inCodeBlock = false, codeBlockContent = '', collectingText = [], currentRuleOrSkill = null;
+                            for (const line of lines) {
+                                const trimmed = line.trim();
+                                if (trimmed.startsWith('```')) {
+                                    inCodeBlock = !inCodeBlock;
+                                    if (!inCodeBlock && codeBlockContent) {
+                                        if (currentPrompt) {
+                                            const lastStep = currentPrompt.steps?.[currentPrompt.steps.length - 1];
+                                            if (lastStep && !lastStep.query) lastStep.query = codeBlockContent.trim();
+                                            else if (!currentPrompt.response) currentPrompt.response = codeBlockContent.trim();
+                                        } else if (currentRuleOrSkill?.steps) {
+                                            const lastStep = currentRuleOrSkill.steps[currentRuleOrSkill.steps.length - 1];
+                                            if (typeof lastStep === 'string') currentRuleOrSkill.steps[currentRuleOrSkill.steps.length - 1] = { instruction: lastStep, query: codeBlockContent.trim() };
+                                            else if (typeof lastStep === 'object') lastStep.query = codeBlockContent.trim();
+                                        }
+                                        codeBlockContent = '';
+                                    }
+                                    continue;
+                                }
+                                if (inCodeBlock) { codeBlockContent += line + '\n'; continue; }
+                                if (!trimmed && collectingText.length === 0) continue;
+                                const h2Match = trimmed.match(/^##\s+(.*)/), h3Match = trimmed.match(/^###\s+(.*)/), h4Match = trimmed.match(/^####\s+(.*)/);
+                                if (h2Match || h3Match) {
+                                    if (collectingText.length > 0 && currentSubSection === 'initialization') { agent.init = collectingText.join(' ').trim(); collectingText = []; }
+                                    currentSection = (h2Match || h3Match)[1].toLowerCase().replace(/\s+/g, '_');
+                                    currentSubSection = ''; currentSubSubSection = ''; currentSkill = null; currentPrompt = null; currentRuleOrSkill = null;
+                                    continue;
+                                }
+                                if (h4Match) { currentSubSection = h4Match[1].toLowerCase().replace(/\s+/g, '_'); currentSubSubSection = ''; collectingText = []; continue; }
+                                if (currentSubSection === 'features' || currentSection.includes('overview')) {
+                                    const bulletMatch = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/);
+                                    if (bulletMatch) {
+                                        const key = bulletMatch[1], value = bulletMatch[2].trim(), keyLower = key.toLowerCase();
+                                        let category = 'general';
+                                        if (keyLower.includes('knowledge') || keyLower.includes('pdf') || keyLower.includes('server') || keyLower.includes('data')) category = 'product_knowledge';
+                                        else if (keyLower.includes('troubleshoot') || keyLower.includes('problem') || keyLower.includes('skill')) category = 'problem_solving';
+                                        else if (keyLower.includes('interactive') || keyLower.includes('engagement') || keyLower.includes('user')) category = 'user_engagement';
+                                        else if (keyLower.includes('dialogue')) category = 'interactive_dialogue';
+                                        if (!agent.features[category]) agent.features[category] = {};
+                                        if (key === 'Interactive') { agent.features.user_engagement = agent.features.user_engagement || {}; agent.features.user_engagement.interactive = "true"; agent.features.user_engagement.personalization = "true"; }
+                                        else if (key === 'Internet Access') { agent.features.user_engagement = agent.features.user_engagement || {}; agent.features.user_engagement.internet = value.toLowerCase().includes('not') ? "false" : "true"; }
+                                        else if (key === 'Enabled' && category === 'interactive_dialogue') { agent.features.interactive_dialogue = agent.features.interactive_dialogue || {}; agent.features.interactive_dialogue.enabled = "true"; agent.features.interactive_dialogue.description = value; }
+                                        else agent.features[category][key] = value;
+                                    }
+                                } else if (currentSection.includes('query_processing')) {
+                                    if (!agent.features.fine_tuning) agent.features.fine_tuning = { enabled: "true", description: "", responseScope: "", sparqlProcessingBehavior: [], semantic_similarity_analysis: {}, predefined_skills: {}, predefined_prompts: [] };
+                                    const fineTuning = agent.features.fine_tuning;
+                                    if (currentSubSection === 'fine-tuning') {
+                                        const bulletMatch = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/), numberedMatch = trimmed.match(/^\s*\d+\.\s+(.*)/);
+                                        if (bulletMatch) {
+                                            const key = bulletMatch[1].toLowerCase().replace(/[\s-]+/g, ''), value = bulletMatch[2].trim();
+                                            if (key === 'enabled') fineTuning.enabled = value.toLowerCase() === 'true' ? "true" : "false";
+                                            else if (key === 'description') fineTuning.description = value;
+                                            else if (key === 'responsescope') fineTuning.responseScope = value;
+                                        } else if (numberedMatch && !currentPrompt && !currentSkill) fineTuning.sparqlProcessingBehavior.push(numberedMatch[1].trim());
+                                    } else if (trimmed.includes('Semantic Similarity Analysis:') || currentSubSubSection === 'semantic_similarity') {
+                                        if (trimmed.includes('Semantic Similarity Analysis:')) currentSubSubSection = 'semantic_similarity';
+                                        else {
+                                            const bulletMatch = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/);
+                                            if (bulletMatch) fineTuning.semantic_similarity_analysis[bulletMatch[1].toLowerCase().replace(/[\s-]+/g, '_')] = bulletMatch[2].trim();
+                                            else if (trimmed.startsWith('-')) fineTuning.semantic_similarity_analysis.inference_mechanism = (fineTuning.semantic_similarity_analysis.inference_mechanism || '') + ' ' + trimmed.substring(1).trim();
+                                        }
+                                    } else if (trimmed.includes('Predefined Skills:') || currentSubSubSection === 'predefined_skills') {
+                                        if (trimmed.includes('Predefined Skills:')) currentSubSubSection = 'predefined_skills';
+                                        else if (currentSubSubSection === 'predefined_skills') {
+                                            const skillNameMatch = trimmed.match(/^- \*\*(.*?)\*\*/);
+                                            if (skillNameMatch) { currentSkill = []; fineTuning.predefined_skills[skillNameMatch[1].replace(/\s+/g, '_')] = currentSkill; currentRuleOrSkill = null; }
+                                            else if (currentSkill) {
+                                                const ruleMatch = trimmed.match(/^\s*(\d+)\.\s+([^:]+):\s*(.*)$/), subBulletMatch = trimmed.match(/^\s*-\s+(.*)/);
+                                                if (ruleMatch) { currentRuleOrSkill = { rule: ruleMatch[2].trim(), instruction: ruleMatch[3].trim() }; currentSkill.push(currentRuleOrSkill); }
+                                                else if (subBulletMatch && currentRuleOrSkill) { if (!currentRuleOrSkill.steps) currentRuleOrSkill.steps = []; currentRuleOrSkill.steps.push(subBulletMatch[1].trim()); }
+                                                else if (trimmed && !trimmed.startsWith('#') && currentRuleOrSkill) {
+                                                    if (trimmed.includes('Example Workflow:')) { currentRuleOrSkill = { rule: 'Example Workflow', steps: [] }; currentSkill.push(currentRuleOrSkill); }
+                                                    else if (currentRuleOrSkill.instruction !== undefined && !currentRuleOrSkill.steps) currentRuleOrSkill.instruction = (currentRuleOrSkill.instruction + ' ' + trimmed).trim();
+                                                }
+                                            }
+                                        }
+                                    } else if (trimmed.includes('predefined_prompts:') || currentSubSubSection === 'predefined_prompts') {
+                                        if (trimmed.includes('predefined_prompts:')) currentSubSubSection = 'predefined_prompts';
+                                        else if (currentSubSubSection === 'predefined_prompts') {
+                                            if (trimmed.startsWith('- ') && !trimmed.includes('**')) { currentPrompt = { hint: trimmed.substring(2).trim(), steps: [] }; fineTuning.predefined_prompts.push(currentPrompt); }
+                                            else if (currentPrompt) {
+                                                const numberedMatch = trimmed.match(/^\s*(\d+)\.\s+(.*)/), hintMatch = trimmed.match(/^-?\s*\*\*[Hh]int:\*\*\s*(.*)/), promptMatch = trimmed.match(/^-?\s*\*\*[Pp]rompt:\*\*\s*(.*)/), responseMatch = trimmed.match(/^-?\s*\*\*[Rr]esponse:\*\*\s*(.*)/);
+                                                if (numberedMatch) {
+                                                    if (currentPrompt.response !== undefined && !numberedMatch[2].includes(':')) currentPrompt.response += '\n' + trimmed;
+                                                    else currentPrompt.steps.push({ step: parseInt(numberedMatch[1]), instruction: numberedMatch[2].trim() });
+                                                } else if (hintMatch) currentPrompt.hint = hintMatch[1].trim();
+                                                else if (promptMatch) currentPrompt.prompt = promptMatch[1].trim();
+                                                else if (responseMatch) currentPrompt.response = responseMatch[1].trim() || "";
+                                            }
+                                        }
+                                    }
+                                } else if (currentSubSection === 'functions') {
+                                    if (!agent.features.functions) agent.features.functions = { description: "", list: [] };
+                                    const descMatch = trimmed.match(/^- \*\*Description:\*\*\s*(.*)/), listMatch = trimmed.match(/^- \*\*List:\*\*\s*(.*)/), functionMatch = trimmed.match(/^- `(.*)`/);
+                                    if (descMatch) agent.features.functions.description = descMatch[1].trim();
+                                    else if (listMatch) agent.features.functions.description += '. ' + listMatch[1].trim();
+                                    else if (functionMatch) agent.features.functions.list.push({ name: functionMatch[1].trim(), description: functionMatch[1].trim().replace(/_/g, ' ') });
+                                } else if (currentSubSection.includes('commands')) {
+                                    const prefixMatch = trimmed.match(/^- \*\*Prefix:\*\*\s*(.*)/), cmdMatch1 = trimmed.match(/^- `(\/\w+)`:\s*(.*)/), cmdMatch2 = trimmed.match(/^- \*\*(.+?):\*\*\s*`([^`]+)`\s*[-:]?\s*(.*)/);
+                                    if (prefixMatch) agent.commands.prefix = prefixMatch[1].trim();
+                                    else if (cmdMatch1) agent.commands.commands[cmdMatch1[1]] = cmdMatch1[2].trim();
+                                    else if (cmdMatch2) agent.commands.commands[cmdMatch2[2]] = cmdMatch2[3].trim();
+                                } else if (currentSubSection === 'rules' && trimmed.startsWith('- ')) agent.rules.push(trimmed.substring(2).trim());
+                                else if (currentSubSection === 'preferences') { const m = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/); if (m) agent.preferences[m[1].toLowerCase().replace(/\s+/g, '_')] = m[2].trim(); }
+                                else if (currentSubSection === 'formats') { const m = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/); if (m) agent.formats[m[1].toLowerCase().replace(/[\s-]+/g, '-')] = m[2].trim(); }
+                                else if (currentSubSection === 'initialization' && !trimmed.startsWith('#') && trimmed) collectingText.push(trimmed);
+                            }
+                            if (collectingText.length > 0 && currentSubSection === 'initialization') agent.init = collectingText.join(' ').trim();
+                            if (!agent.init) agent.init = `Upon activation, the ${agentName} greets the user, shares their current capabilities and preferences, and awaits further instructions.`;
+                            if (agent.features.fine_tuning && !agent.features.query_optimization) agent.features.query_optimization = {};
+                            if (metadata.functions?.length) {
+                                agent.features.functions = {
+                                    description: agent.features.functions?.description || "Functions are invoked based on user input or as a fallback.",
+                                    list: metadata.functions.map(f => typeof f === 'string' ? { name: f, description: f.split('.').pop().replace(/_/g, ' ') } : { name: f.function || f.name, description: f.title || f.description || (f.function || f.name).split('.').pop().replace(/_/g, ' ') })
+                                };
+                            } else if (agent.features.functions) agent.features.functions.list = [];
+                            agent.id = metadata.id; agent.creation_date = metadata.creationDate;
+                            return root;
+                        } catch (error) { console.error("Error parsing Markdown to Agent JSON:", error); throw error; }
+                    },
+
+                    transformMarkdownToOpenAIJson(markdownText, metadata) {
+                        try {
+                            const lines = markdownText.split('\n');
+                            const json = { openai: { schema_version: '1.0.0', name: metadata.title || 'Custom AI Assistant', description: '', version: metadata.version || '1.0.0', instructions: '', capabilities: {}, query_processing: { predefined_skills: {}, predefined_prompts: [], functions: [] }, commands: [], rules: [], preferences: {}, formats: {}, initialization: {} } };
+                            const openai = json.openai;
+                            const baseDescription = (markdownText.match(/^\*\*Description:\*\*\s*(.*)/im) || [])[1]?.trim() || 'Custom AI Assistant';
+                            openai.description = `${baseDescription} (ID: ${metadata.id}, Created: ${metadata.creationDate})`;
+                            let currentH3 = '', currentH4 = '', currentSkill = null, currentPrompt = null, inCodeBlock = false, codeBlockContent = '';
+                            for (const line of lines) {
+                                const trimmed = line.trim(); if (!trimmed) continue;
+                                if (trimmed.startsWith('```')) {
+                                    inCodeBlock = !inCodeBlock;
+                                    if (!inCodeBlock && currentPrompt && codeBlockContent) {
+                                        if (currentPrompt.steps?.length) currentPrompt.steps[currentPrompt.steps.length - 1].query = codeBlockContent.trim();
+                                        else if (!currentPrompt.response) currentPrompt.response = codeBlockContent.trim();
+                                        codeBlockContent = '';
+                                    }
+                                    continue;
+                                }
+                                if (inCodeBlock) { codeBlockContent += line + '\n'; continue; }
+                                const h3Match = trimmed.match(/^###\s+(.*)/);
+                                if (h3Match) { currentH3 = h3Match[1].toLowerCase().replace(/\s+/g, '_'); currentH4 = ''; currentSkill = null; currentPrompt = null; if (currentH3 === 'capabilities') openai.capabilities = {}; continue; }
+                                const h4Match = trimmed.match(/^####\s+(.*)/);
+                                if (h4Match) {
+                                    currentH4 = h4Match[1].toLowerCase().replace(/\s+/g, '_');
+                                    if (currentH3 === 'capabilities') openai.capabilities[currentH4] = {};
+                                    else if (currentH3 === 'query_processing' && !['predefined_skills', 'predefined_prompts', 'functions'].includes(currentH4)) openai.query_processing[currentH4] = {};
+                                    continue;
+                                }
+                                switch (currentH3) {
+                                    case 'rules': if (trimmed.startsWith('- ')) openai.rules.push(trimmed.substring(2)); break;
+                                    case 'preferences': case 'formats': case 'initialization': { const m = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/); if (m) openai[currentH3][m[1].toLowerCase().replace(/\s+/g, '_')] = m[2].trim(); break; }
+                                    case 'commands': { const m = trimmed.match(/^- \*\*(.*?):\*\*\s*`([^`]+)`\s*-\s*(.*)/); if (m) openai.commands.push({ prefix: m[2], name: m[1].toLowerCase(), description: m[3] }); break; }
+                                    case 'capabilities': { const m = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/); if (m && currentH4) openai.capabilities[currentH4][m[1].toLowerCase().replace(/\s+/g, '_')] = { enabled: true, description: m[2].trim() }; break; }
+                                    case 'query_processing':
+                                        if (currentH4 === 'functions') { const m = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/); if (m) openai.query_processing.functions.push({ name: m[1], description: m[2] }); }
+                                        else if (currentH4 === 'predefined_skills') {
+                                            const skillMatch = trimmed.match(/^- \*\*(.*?):\*\*/), numMatch = trimmed.match(/^\s*\d+\.\s+(.*)/);
+                                            if (skillMatch) { currentSkill = skillMatch[1].toLowerCase().replace(/\s+/g, '_'); openai.query_processing.predefined_skills[currentSkill] = { rules: [], example_workflow: [] }; }
+                                            else if (numMatch && currentSkill) {
+                                                if (trimmed.includes('Example Workflow')) openai.query_processing.predefined_skills[currentSkill].example_workflow.push(numMatch[1]);
+                                                else openai.query_processing.predefined_skills[currentSkill].rules.push({ step: numMatch[1], description: numMatch[1] });
+                                            }
+                                        } else if (currentH4 === 'predefined_prompts') {
+                                            const typeMatch = trimmed.match(/^- (.*)/), stepMatch = trimmed.match(/^\s*\d+\.\s+(.*)/);
+                                            if (typeMatch && !stepMatch) { currentPrompt = { type: typeMatch[1], steps: [] }; openai.query_processing.predefined_prompts.push(currentPrompt); }
+                                            else if (stepMatch && currentPrompt) currentPrompt.steps.push({ step: currentPrompt.steps.length + 1, description: stepMatch[1] });
+                                            else {
+                                                const hintMatch = trimmed.match(/^- \*\*Hint:\*\*\s*(.*)/), promptMatch = trimmed.match(/^- \*\*Prompt:\*\*\s*(.*)/), queryMatch = trimmed.match(/^- \*\*Query:\*\*\s*`(.*)`/), responseMatch = trimmed.match(/^- \*\*Response:\*\*\s*(.*)/);
+                                                if (hintMatch) currentPrompt.hint = hintMatch[1]; else if (promptMatch) currentPrompt.prompt = promptMatch[1]; else if (queryMatch) currentPrompt.query = queryMatch[1]; else if (responseMatch) currentPrompt.response = responseMatch[1];
+                                            }
+                                        } else if (currentH4) {
+                                            const match = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/), numMatch = trimmed.match(/^\s*\d+\.\s+(.*)/);
+                                            if (match) openai.query_processing[currentH4][match[1].toLowerCase().replace(/\s+/g, '_')] = match[2];
+                                            else if (numMatch) { if (!openai.query_processing[currentH4].steps) openai.query_processing[currentH4].steps = []; openai.query_processing[currentH4].steps.push(numMatch[1]); }
+                                        }
+                                        break;
+                                    case 'initialization':
+                                        if (!openai.initialization.greeting) {
+                                            openai.initialization.greeting = `Hello! I'm ${metadata.title}, here to assist...`;
+                                            openai.initialization.configuration = 'If preferences are invalid, guide the user through configuration.';
+                                            openai.initialization.response_adjustment = 'Adjust responses based on user interactions.';
+                                        }
+                                        break;
+                                }
+                            }
+                            return json;
+                        } catch (error) { console.error('Error parsing Markdown to OpenAI JSON:', error); throw error; }
+                    }
+                }
+            };
+
+            // --- Start the application ---
+            App.init();
+        });
+    </script>
+</body>
+
+</html>
