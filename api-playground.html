@@ -14,7 +14,7 @@
       "@type": "TechArticle",
       "headline": "OpenLink AI Layer (OPAL) Functions (Tools) Playground",
       "description": "An immersive, interactive playground to accelerate developer onboarding. Go from zero to a fully authenticated API call interactions in seconds.",
-      "datePublished": "2025-01-01",
+      "datePublished": "2025-09-19",
       "author": {
         "@type": "Organization",
         "name": "OpenLink Software",
@@ -375,6 +375,54 @@
         .response-viewer.error {
             color: var(--color-error);
             border-color: var(--color-error);
+        }
+
+        .response-viewer.chat-log {
+            max-height: 500px;
+            font-family: var(--font-family-sans);
+            white-space: normal;
+        }
+
+        .chat-log .message {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .chat-log .message:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .chat-log .message-sender {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--color-primary);
+        }
+
+        .chat-log .message-sender.user {
+            color: var(--color-success);
+        }
+
+        .chat-log .message-content p {
+            margin-bottom: 0.5em;
+            color: var(--color-text);
+        }
+
+        .chat-log .message-content pre {
+            background-color: var(--color-background);
+            padding: 0.75rem;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: var(--font-family-mono);
+        }
+
+        .chat-log .message-content code {
+            background-color: var(--color-background);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: var(--font-family-mono);
         }
 
         .code-snippet {
@@ -1012,18 +1060,60 @@
 
                         <!-- Path 2: Instantiate Agent -->
                         <div id="path-instantiate" style="display:none;">
-                            <div class="input-group">
-                                <label for="qs-agent-select">Select an Agent</label>
-                                <select id="qs-agent-select">
-                                    <option>Run Step 3 to load agents...</option>
-                                </select>
+                            <div id="agent-creation-block">
+                                <div class="input-group">
+                                    <label for="qs-agent-select">Select an Agent</label>
+                                    <select id="qs-agent-select">
+                                        <option>Run Step 3 to load agents...</option>
+                                    </select>
+                                </div>
+                                <!-- FIX START: Add Model Selection Dropdown in the correct location -->
+                                <div class="input-group">
+                                    <label for="qs-agent-model-select">Model</label>
+                                    <select id="qs-agent-model-select" class="global-state-input"
+                                        data-state-key="model">
+                                        <option>Run Step 3 to populate models...</option>
+                                    </select>
+                                </div>
+                                <!-- FIX END -->
+                                <button id="qs-run-instantiate-agent" class="btn btn-primary">Instantiate Agent</button>
+                                <div class="input-group">
+                                    <label for="qs-alt-question">Initial Question (Optional)</label>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <input type="text" id="qs-alt-question" placeholder="e.g., What are you?"
+                                            style="flex: 1;">
+                                        <button id="qs-send-initial-question" class="btn btn-secondary"
+                                            style="flex-shrink: 0;">Send</button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="input-group">
-                                <label for="qs-alt-question">Initial Question (Optional)</label>
-                                <input type="text" id="qs-alt-question" placeholder="e.g., What are you?">
+
+                            <div id="agent-interaction-block" style="display: none;">
+                                <h4 style="margin-top:0;">Chat with <strong id="active-agent-name"
+                                        style="color: var(--color-primary);"></strong></h4>
+                                <!-- FIX START: Add Model API Key input here -->
+                                <div class="input-group">
+                                    <label for="qs-agent-model-key">Model API Key (Optional Override)</label>
+                                    <input type="password" id="qs-agent-model-key" class="global-state-input"
+                                        data-state-key="modelApiKeyOverride"
+                                        placeholder="Leave blank to use system default">
+                                    <button class="api-key-toggle-vis" title="Toggle API Key Visibility">
+                                    </button>
+                                </div>
+                                <!-- FIX END -->
+                                <div class="input-group">
+                                    <label for="qs-agent-chat-input">Your Message</label>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <input type="text" id="qs-agent-chat-input"
+                                            placeholder="Ask the agent a follow-up question..." style="flex: 1;">
+                                        <button id="qs-agent-chat-send-btn" class="btn btn-secondary"
+                                            style="flex-shrink: 0;">Send</button>
+                                    </div>
+                                </div>
+                                <button id="qs-new-agent-session" class="btn btn-secondary">Start New Session</button>
                             </div>
-                            <button id="qs-run-instantiate-agent" class="btn btn-primary">Instantiate Agent</button>
                         </div>
+
 
                         <!-- Path 3: Create Agent -->
                         <div id="path-create" style="display:none;">
@@ -1076,7 +1166,7 @@
                             </div>
                             <button id="qs-run-save-agent" class="btn btn-primary">Save Agent Configuration</button>
                         </div>
-                        <pre id="qs-config-response" class="response-viewer">Response will appear here...</pre>
+                        <div id="qs-config-response" class="response-viewer">Response will appear here...</div>
                     </div>
                 </div>
                 <!-- Step 5 -->
@@ -1208,6 +1298,12 @@
                     openApiUrls: [],
                     openApiSpec: null,
                     oauthEndpoints: null,
+                    isAgentSession: false,
+                    currentAgent: null,
+                    availableFunctions: [],  // Handles functions fetched from the API
+                    availableAgents: [],     // Handles agents fetched from the API
+                    currentSessionTools: [], // Handles tools bound to the current session
+                    lastChatCompletionBody: null, // Handles last chat completion request body
                 },
 
                 // --- INITIALIZATION ---
@@ -1216,7 +1312,6 @@
                     if (persistedEndpointUrl) {
                         this.state.endpointUrl = persistedEndpointUrl;
                     }
-                    // Set default OpenAPI URLs based on current endpoint
                     if (this.state.openApiUrls.length === 0) {
                         this.state.openApiUrls = this.generateDefaultOpenApiUrls();
                     }
@@ -1260,6 +1355,12 @@
                             explorerApiKeyInput: document.getElementById('explorer-api-key'),
                             bearerTokenLinkContainer: document.getElementById('bearer-token-link-container'),
                             bearerTokenMainLink: document.getElementById('bearer-token-main-link'),
+                            agentCreationBlock: document.getElementById('agent-creation-block'),
+                            agentInteractionBlock: document.getElementById('agent-interaction-block'),
+                            activeAgentName: document.getElementById('active-agent-name'),
+                            agentChatInput: document.getElementById('qs-agent-chat-input'),
+                            agentChatSendBtn: document.getElementById('qs-agent-chat-send-btn'),
+                            newAgentSessionBtn: document.getElementById('qs-new-agent-session'),
                         },
                         apiExplorer: {
                             sidebar: document.getElementById('sidebar-links'),
@@ -1277,6 +1378,11 @@
                         }
                     });
 
+                    // This button now also triggers instantiation
+                    document.getElementById('qs-send-initial-question').addEventListener('click', (e) => {
+                        this.handlers.handleInstantiateAgent(document.getElementById('qs-run-instantiate-agent'));
+                    });
+
                     this.dom.qs.loadSpecBtn.addEventListener('click', () => this.handlers.handleLoadOpenApiSpec());
                     this.dom.qs.addUrlBtn.addEventListener('click', () => this.handlers.handleOpenApiUrlInteraction({ type: 'add' }));
                     this.dom.qs.openapiUrlsContainer.addEventListener('click', (e) => this.handlers.handleOpenApiUrlInteraction(e));
@@ -1292,6 +1398,20 @@
                     this.dom.qs.oauthLoginBtn.addEventListener('click', (e) => this.handlers.handleOAuthLogin(e.target));
                     this.dom.qs.oauthLogoutBtn.addEventListener('click', () => this.handlers.resetAuthenticationState());
 
+                    // Agent Interaction Listeners
+                    this.dom.qs.agentChatSendBtn.addEventListener('click', () => this.handlers.handleAgentChatCompletion());
+                    this.dom.qs.agentChatInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            this.handlers.handleAgentChatCompletion();
+                        }
+                    });
+                    this.dom.qs.newAgentSessionBtn.addEventListener('click', () => {
+                        if (confirm('This will end the current session and start a new one. Continue?')) {
+                            this.ui.switchToAgentSelectionView();
+                        }
+                    });
+
                     this.ui.initializeAuthMethodToggle();
                     this.ui.initializeStep4Choice();
                     this.ui.initializeMarkdownUploader();
@@ -1306,7 +1426,6 @@
                     if (key === 'endpointUrl' && valueChanged) {
                         sessionStorage.setItem('opal.endpointUrl', value);
 
-                        // Only regenerate URLs if we're not explicitly preserving them
                         if (!preserveOpenApiUrls) {
                             this.state.openApiUrls = this.generateDefaultOpenApiUrls();
                             this.ui.renderOpenApiUrlInputs();
@@ -1324,7 +1443,9 @@
                         }
                     });
 
-                    if (valueChanged && ['chatId', 'model', 'question', 'title', 'top_p', 'temperature', 'modelApiKeyOverride', 'sessionFunctions'].includes(key)) {
+                    if (valueChanged && ['chatId', 'model', 'question', 'title', 'top_p', 'temperature',
+                        'modelApiKeyOverride', 'sessionFunctions', 'isAgentSession',
+                        'currentAgent'].includes(key)) {
                         this.ui.syncApiCards();
                     }
                 },
@@ -1359,7 +1480,6 @@
                             `${baseUrl.replace('/api', '')}/functions/openapi.yaml`
                         ];
                     } catch (e) {
-                        // Fallback to original defaults if URL parsing fails
                         return [
                             'https://linkeddata.uriburner.com/chat/api/openapi.yaml',
                             'https://linkeddata.uriburner.com/chat/functions/openapi.yaml'
@@ -1373,13 +1493,15 @@
                         triggerButton.disabled = true;
                         triggerButton.textContent = 'Loading...';
                     }
-                    this.ui.showLoading(responseElement);
+                    if (responseElement) {
+                        this.ui.showLoading(responseElement);
+                    }
 
                     const headers = { 'Content-Type': 'application/json' };
                     if (isAuthenticated) {
                         if (!this.state.apiKey) {
                             const error = new Error('API Key is required. Please provide it in Step 2.');
-                            this.ui.showError(responseElement, error);
+                            if (responseElement) this.ui.showError(responseElement, error);
                             if (triggerButton) {
                                 triggerButton.disabled = false;
                                 triggerButton.textContent = originalButtonText;
@@ -1398,7 +1520,7 @@
 
                         if (response.status === 204 || response.status === 201) {
                             const successData = { status: response.status, statusText: response.statusText, data: null };
-                            this.ui.showSuccess(responseElement, successData);
+                            if (responseElement) this.ui.showSuccess(responseElement, successData);
                             return { data: successData, error: null };
                         }
 
@@ -1415,11 +1537,11 @@
                         }
 
                         const resultData = { status: response.status, statusText: response.statusText, data: responseData };
-                        this.ui.showSuccess(responseElement, resultData);
+                        if (responseElement) this.ui.showSuccess(responseElement, resultData);
                         return { data: resultData, error: null };
 
                     } catch (error) {
-                        this.ui.showError(responseElement, error);
+                        if (responseElement) this.ui.showError(responseElement, error);
                         return { data: null, error };
                     } finally {
                         if (triggerButton) {
@@ -1444,7 +1566,7 @@
                             if (!isNaN(index)) {
                                 App.state.openApiUrls[index] = target.value;
                             }
-                            return; // No need to re-render on every keystroke
+                            return;
                         }
                         App.ui.renderOpenApiUrlInputs();
                     },
@@ -1481,16 +1603,7 @@
                             const serverUrl = mergedSpec?.servers?.[0]?.url;
                             if (serverUrl) {
                                 const absoluteUrl = new URL(serverUrl, urls[0]).href;
-
-                                // Preserve user's OpenAPI URLs before state update
-                                const userOpenApiUrls = [...App.state.openApiUrls];
-
-                                // App.updateState('endpointUrl', absoluteUrl);
                                 App.updateState('endpointUrl', absoluteUrl, null, true);
-
-                                // Restore user's OpenAPI URLs after state update
-                                // App.state.openApiUrls = userOpenApiUrls;
-                                // App.ui.renderOpenApiUrlInputs();
 
                                 const serviceTitle = mergedSpec?.info?.title;
                                 endpointLabel.innerHTML = serviceTitle ?
@@ -1521,6 +1634,8 @@
                         if (data?.data?.chat_id) {
                             const newChatId = data.data.chat_id;
                             App.updateState('chatId', newChatId);
+                            App.updateState('isAgentSession', false);
+                            App.updateState('currentAgent', null);
                             App.dom.qs.chatIdValue.textContent = newChatId;
                             App.dom.qs.chatIdDisplay.style.display = 'block';
                             App.ui.scrollToStep('qs-step-3-list-resources');
@@ -1548,12 +1663,17 @@
                             const agentsJson = await agentsResponse.json();
 
                             const functions = Array.isArray(functionsJson) ? functionsJson : functionsJson.functions || [];
+                            App.state.availableFunctions = functions; // Store fetched functions in state
+
                             const agents = Array.isArray(agentsJson) ? agentsJson : agentsJson.agents || [];
+
+                            App.ui.populateFunctionCheckboxes(functions, 'qs-function-selector-container');
 
                             App.ui.populateFunctionCheckboxes(functions, 'qs-function-selector-container');
                             App.ui.populateFunctionCheckboxes(functions, 'qs-agent-function-selector-container');
                             App.ui.populateModelDropdown('qs-update-model');
                             App.ui.populateModelDropdown('qs-agent-model');
+                            App.ui.populateModelDropdown('qs-agent-model-select'); // For agent instantiation
                             App.ui.populateAgentDropdown(agents);
 
                             responseEl.textContent = `Successfully loaded ${functions.length} function(s) and ${agents.length} agent(s).`;
@@ -1588,7 +1708,8 @@
                     },
 
                     async handleInstantiateAgent(button) {
-                        const agentConfigId = document.getElementById('qs-agent-select').value;
+                        const agentSelect = document.getElementById('qs-agent-select');
+                        const agentConfigId = agentSelect.value;
                         const altQuestion = document.getElementById('qs-alt-question').value;
 
                         if (!agentConfigId) {
@@ -1596,23 +1717,102 @@
                             return;
                         }
 
-                        const body = { model: App.state.model, chat_id: agentConfigId };
-                        if (altQuestion.trim()) body.alt_question = altQuestion;
+                        const selectedOption = agentSelect.selectedOptions[0];
+                        const agentTitle = selectedOption.textContent;
 
-                        const { data } = await App.makeApiCall({
+                        const body = { model: App.state.model, chat_id: agentConfigId };
+                        if (altQuestion.trim()) {
+                            body.alt_question = altQuestion;
+                        }
+
+                        const { data, error } = await App.makeApiCall({
                             url: `${App.state.endpointUrl}/chatCompletion`,
                             method: 'POST',
                             isAuthenticated: true,
                             body,
-                            responseElement: App.dom.qs.configResponseEl,
+                            responseElement: null, // We handle the response manually
                             triggerButton: button
                         });
+
+                        if (error) {
+                            App.ui.showError(App.dom.qs.configResponseEl, error);
+                            return;
+                        }
 
                         if (data?.data?.chat_id) {
                             const newChatId = data.data.chat_id;
                             App.updateState('chatId', newChatId);
-                            App.dom.qs.chatIdValue.textContent = newChatId;
+                            App.updateState('isAgentSession', true);
+                            App.updateState('currentAgent', {
+                                title: agentTitle,
+                                chatId: newChatId,
+                                configId: agentConfigId
+                            });
+
+                            App.state.currentSessionTools = App.state.availableFunctions.map(f => f.function); // Bind all available functions for now
+                            App.dom.qs.chatIdValue.textContent = newChatId; // Update the displayed chat ID
                             App.dom.qs.chatIdDisplay.style.display = 'block';
+
+                            App.ui.switchToAgentChatView(agentTitle, data.data.answer);
+
+                        } else {
+                            App.ui.showError(App.dom.qs.configResponseEl, new Error('Failed to instantiate agent session. Invalid response from server.'));
+                            App.dom.qs.chatIdDisplay.style.display = 'none';
+                        }
+                    },
+
+                    async handleAgentChatCompletion() {
+                        const inputEl = App.dom.qs.agentChatInput;
+                        const question = inputEl.value.trim();
+                        if (!question) return;
+                        // --- FIX START ---
+                        // Update the global state so the API explorer reflects this question.
+                        App.updateState('question', question);
+                        // --- FIX END ---
+
+                        App.ui.appendMessageToChatLog(question, 'user');
+                        inputEl.value = '';
+                        inputEl.focus();
+
+                        const body = {
+                            question: question,
+                            chat_id: App.state.chatId, // Use the existing session ID
+                            model: App.state.model,
+                            call: App.state.currentSessionTools // Use tools bound to the current session
+                        };
+                        // --- FIX START ---
+                        // Read the optional override key from the new input in the agent chat UI.
+                        const modelKeyOverride = document.getElementById('qs-agent-model-key').value;
+                        if (modelKeyOverride.trim()) {
+                            body.apiKey = modelKeyOverride;
+                        }
+                        // --- FIX END ---
+                        // --- FIX START ---
+                        // Capture the exact request body before sending it.
+                        App.updateState('lastChatCompletionBody', body);
+                        // --- FIX END ---
+
+                        const { data, error } = await App.makeApiCall({
+                            url: `${App.state.endpointUrl}/chatCompletion`,
+                            method: 'POST',
+                            isAuthenticated: true,
+                            body,
+                            responseElement: null, // Manual UI updates
+                            triggerButton: App.dom.qs.agentChatSendBtn
+                        });
+
+                        if (error) {
+                            App.ui.appendMessageToChatLog(`Error: ${error.message}`, 'system-error');
+                            return;
+                        }
+
+                        // Correctly parse the response which might be a plain string or an object
+                        const answer = (typeof data.data === 'object' && data.data.data) ? data.data.data : data.data.answer || JSON.stringify(data.data);
+                        if (answer) {
+                            App.ui.appendMessageToChatLog(answer, 'agent');
+                        } else {
+                            const errorMessage = `Received an unexpected response: ${JSON.stringify(data?.data || 'empty response')}`;
+                            App.ui.appendMessageToChatLog(errorMessage, 'system-error');
                         }
                     },
 
@@ -1662,15 +1862,19 @@
                             App.ui.showError(App.dom.qs.updateTopicResponseEl, new Error('Please create a session first to get a Session ID.'));
                             return;
                         }
+
                         const body = {
-                            title: App.state.title,
-                            model: App.state.model,
-                            top_p: App.state.top_p,
-                            temperature: App.state.temperature
+                            title: document.getElementById('qs-update-title').value || App.state.title,
+                            model: document.getElementById('qs-update-model').value || App.state.model,
+                            top_p: parseFloat(document.getElementById('qs-update-top-p').value) || App.state.top_p,
+                            temperature: parseFloat(document.getElementById('qs-update-temperature').value) || App.state.temperature
                         };
-                        if (App.state.modelApiKeyOverride.trim()) {
-                            body.apiKey = App.state.modelApiKeyOverride;
+
+                        const modelKeyOverride = document.getElementById('qs-update-model-key').value;
+                        if (modelKeyOverride.trim()) {
+                            body.apiKey = modelKeyOverride;
                         }
+
                         await App.makeApiCall({
                             url: `${App.state.endpointUrl}/chatTopic?chat_id=${App.state.chatId}`,
                             method: 'POST',
@@ -1686,17 +1890,23 @@
                             App.ui.showError(App.dom.qs.chatCompletionResponseEl, new Error('Please create a session first to get a Session ID.'));
                             return;
                         }
+
                         const body = {
-                            question: App.state.question,
+                            question: document.getElementById('qs-question').value || App.state.question,
                             chat_id: App.state.chatId,
-                            model: App.state.model
+                            model: document.getElementById('qs-update-model').value || App.state.model
                         };
-                        if (App.state.sessionFunctions.length > 0) {
-                            body.call = App.state.sessionFunctions.map(f => f.function);
+
+                        const manualFunctions = App.state.sessionFunctions;
+                        if (!App.state.isAgentSession && manualFunctions.length > 0) {
+                            body.call = manualFunctions.map(f => f.function);
                         }
-                        if (App.state.modelApiKeyOverride.trim()) {
-                            body.apiKey = App.state.modelApiKeyOverride;
+
+                        const modelKeyOverride = document.getElementById('qs-update-model-key').value;
+                        if (modelKeyOverride.trim()) {
+                            body.apiKey = modelKeyOverride;
                         }
+
                         await App.makeApiCall({
                             url: `${App.state.endpointUrl}/chatCompletion`,
                             method: 'POST',
@@ -1789,7 +1999,10 @@
                         App.updateState('apiKey', '');
                         App.updateState('chatId', '');
                         App.updateState('oauthClientId', '');
+                        App.updateState('isAgentSession', false);
+                        App.updateState('currentAgent', null);
                         App.state.oauthEndpoints = null;
+                        App.state.currentSessionTools = []; // Clear session-bound tools
                         App.utils.clearOAuthSession();
                         App.ui.resetApiKeyState(isAutomatic);
                     },
@@ -1844,7 +2057,6 @@
                             statusEl.textContent = "Exchanging authorization code for token...";
                             statusEl.style.color = 'var(--color-text-muted)';
 
-                            // Use the current endpoint URL from state, not the one from OAuth state
                             const currentOrigin = new URL(App.state.endpointUrl).origin;
                             const endpoints = await App.utils.discoverOAuthEndpoints(currentOrigin, statusEl);
 
@@ -1866,7 +2078,6 @@
                             }
 
                             const tokenData = await tokenResponse.json();
-                            // App.updateState('apiKey', tokenData.access_token);
                             App.updateState('apiKey', tokenData.access_token);
 
                             App.updateState('oauthClientId', clientId);
@@ -1951,18 +2162,21 @@
 
                 ui: {
                     showLoading(element) {
+                        if (!element) return;
                         element.textContent = 'Loading...';
                         element.className = 'response-viewer';
                         element.style.display = 'block';
                     },
 
                     showError(element, error) {
+                        if (!element) return;
                         element.textContent = `Error: ${error.message}`;
                         element.className = 'response-viewer error';
                         element.style.display = 'block';
                     },
 
                     showSuccess(element, result) {
+                        if (!element) return;
                         element.className = 'response-viewer success';
                         element.style.display = 'block';
 
@@ -1997,6 +2211,61 @@
                         } else {
                             element.textContent = displayString;
                         }
+                    },
+
+                    switchToAgentChatView(agentTitle, initialMessage) {
+                        App.dom.qs.agentCreationBlock.style.display = 'none';
+                        App.dom.qs.agentInteractionBlock.style.display = 'block';
+                        App.dom.qs.activeAgentName.textContent = agentTitle;
+
+                        const chatLog = App.dom.qs.configResponseEl;
+                        chatLog.innerHTML = '';
+                        chatLog.className = 'response-viewer chat-log';
+
+                        if (initialMessage) {
+                            this.appendMessageToChatLog(initialMessage, 'agent');
+                        } else {
+                            this.appendMessageToChatLog(`Hello! I am ${agentTitle}. How can I assist you?`, 'agent');
+                        }
+
+                        App.dom.qs.agentChatInput.focus();
+                    },
+
+                    switchToAgentSelectionView() {
+                        App.dom.qs.agentCreationBlock.style.display = 'block';
+                        App.dom.qs.agentInteractionBlock.style.display = 'none';
+                        App.updateState('chatId', '');
+                        App.updateState('isAgentSession', false);
+                        App.updateState('currentAgent', null);
+
+                        const responseEl = App.dom.qs.configResponseEl;
+                        responseEl.innerHTML = 'Response will appear here...';
+                        responseEl.className = 'response-viewer';
+                        document.getElementById('qs-alt-question').value = '';
+                    },
+
+                    appendMessageToChatLog(message, sender) {
+                        const chatLog = App.dom.qs.configResponseEl;
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'message';
+
+                        const senderDiv = document.createElement('div');
+                        senderDiv.className = `message-sender ${sender}`;
+                        senderDiv.textContent = sender === 'user' ? 'You' : (App.state.currentAgent?.title || 'Agent');
+                        if (sender === 'system-error') {
+                            senderDiv.textContent = 'System Error';
+                            senderDiv.style.color = 'var(--color-error)';
+                        }
+
+                        const contentDiv = document.createElement('div');
+                        contentDiv.className = 'message-content';
+                        contentDiv.innerHTML = sender === 'agent' ? marked.parse(message) : `<p>${message}</p>`;
+
+                        messageDiv.appendChild(senderDiv);
+                        messageDiv.appendChild(contentDiv);
+                        chatLog.appendChild(messageDiv);
+
+                        chatLog.scrollTop = chatLog.scrollHeight;
                     },
 
                     updateAllStateInputs() {
@@ -2122,10 +2391,35 @@
                             const textarea = card.querySelector('.request-body-input');
                             if (!textarea) return;
                             try {
+                                // --- FIX START ---
+                                // Prioritize showing the last actual request body sent.
+                                if (App.state.lastChatCompletionBody) {
+                                    textarea.value = JSON.stringify(App.state.lastChatCompletionBody, null, 2);
+                                    return; // Exit early as we have the exact data
+                                }
+                                // --- FIX END ---
                                 const bodyJson = JSON.parse(textarea.value);
                                 bodyJson.chat_id = App.state.chatId || App.utils.getSensibleDefault({ type: 'string' }, 'chat_id');
                                 bodyJson.model = App.state.model;
                                 bodyJson.question = App.state.question;
+                                // --- FIX START ---
+                                // Use the correct set of functions based on whether we are in an agent session or a manual one.
+                                if (App.state.isAgentSession) {
+                                    // For agents, use the tools bound to the agent's session
+                                    if (App.state.currentSessionTools && App.state.currentSessionTools.length > 0) {
+                                        bodyJson.call = App.state.currentSessionTools;
+                                    } else {
+                                        delete bodyJson.call;
+                                    }
+                                } else {
+                                    // For manual sessions, use the functions selected in Step 4
+                                    if (App.state.sessionFunctions.length > 0) {
+                                        bodyJson.call = App.state.sessionFunctions.map(f => f.function);
+                                    } else {
+                                        delete bodyJson.call;
+                                    }
+                                }
+                                // --- FIX END ---
                                 if (App.state.sessionFunctions.length > 0) {
                                     bodyJson.call = App.state.sessionFunctions.map(f => f.function);
                                 } else {
@@ -2522,12 +2816,35 @@
                             instantiate: document.getElementById('path-instantiate'),
                             create: document.getElementById('path-create')
                         };
+                        // Get references to the timeline items for steps 5 and 6
+                        const step5Container = document.getElementById('qs-step-5-modify-session').closest('.timeline-item');
+                        const step6Container = document.getElementById('qs-step-6-ask-question').closest('.timeline-item');
+
+
                         document.querySelector('.session-choice').addEventListener('change', (e) => {
+                            const selectedValue = e.target.value;
+
+                            // --- FIX START ---
+                            // Toggle visibility of steps 5 and 6 based on the selected path
+                            if (selectedValue === 'instantiate') {
+                                step5Container.style.display = 'none';
+                                step6Container.style.display = 'none';
+                            } else {
+                                step5Container.style.display = 'block';
+                                step6Container.style.display = 'block';
+                            }
+                            // --- FIX END ---
+
+                            if (selectedValue !== 'instantiate' && App.state.isAgentSession) {
+                                this.switchToAgentSelectionView();
+                            }
+
                             Object.values(paths).forEach(p => p.style.display = 'none');
-                            const selectedPath = paths[e.target.value];
+                            const selectedPath = paths[selectedValue];
+
                             if (selectedPath) {
                                 selectedPath.style.display = 'block';
-                                if (e.target.value === 'create') {
+                                if (selectedValue === 'create') {
                                     const idInput = document.getElementById('qs-agent-id');
                                     if (!idInput.value) idInput.value = 'my-new-agent';
                                     const titleInput = document.getElementById('qs-agent-title');
@@ -2648,12 +2965,9 @@
                     generateCodeSnippet(language, endpointData) {
                         const { path, method, requiresAuth, params, body } = endpointData;
 
-                        // Create a sanitized copy of the body for display purposes.
                         let sanitizedBody = null;
                         if (body) {
-                            // Use JSON stringify/parse for a deep clone to avoid mutating the original object.
                             sanitizedBody = JSON.parse(JSON.stringify(body));
-                            // Check for and mask the apiKey property if it exists and has a value.
                             if (sanitizedBody.hasOwnProperty('apiKey') && sanitizedBody.apiKey) {
                                 sanitizedBody.apiKey = '[...masked for security...]';
                             }
