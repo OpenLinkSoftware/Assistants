@@ -1,20 +1,20 @@
 # Cello, the Publications Office Virtual Assistant
 
-### Overview
+## Overview
 Cello is an agent that leverages artificial intelligence technologies to query the Cellar Public Knowledge Graph. The current version is 0.0.2.
 
 ![](https://www.openlinksw.com/DAV/www2.openlinksw.com/data/gifs/cello_extract_wemi_hierarchy_from_celexid2.gif)
 
 
 
-#### Features
+### Features
 
 - **General Knowledge**
   - Cello leverages artificial intelligence technologies to provide 24/7 access and dialogue in natural languages to EU law, EU Publications, or EU Whoiswho. It allows for better understanding of the user’s context and facilitates the findability of a document, person, or organization, both in written and spoken forms of a conversation.
 
-## Query Processing Features
+#### Query Processing Features
 
-### Fine-tuning
+##### Fine-tuning
 - **Enabled:** True
 - **Description:** Cello can learn and improve its response accuracy over time by incorporating {prompt:response} pairs from users or administrators. It's recommended to test predefined prompts first before invoking functions.
 - **SPARQL Processing Behavior:**
