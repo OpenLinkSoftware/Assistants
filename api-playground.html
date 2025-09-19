@@ -14,7 +14,7 @@
       "@type": "TechArticle",
       "headline": "OpenLink AI Layer (OPAL) Functions (Tools) Playground",
       "description": "An immersive, interactive playground to accelerate developer onboarding. Go from zero to a fully authenticated API call interactions in seconds.",
-      "datePublished": "2025-09-19",
+      "datePublished": "2025-01-01",
       "author": {
         "@type": "Organization",
         "name": "OpenLink Software",
@@ -1126,7 +1126,7 @@
                             <div class="input-group">
                                 <label for="qs-agent-id">Agent ID</label>
                                 <input type="text" id="qs-agent-id">
-                                <p>A short, unique name. The prefix <code>system-</code> will be added automatically.
+                                <p>A short, unique name. The prefix `system-` will be added automatically.
                                 </p>
                             </div>
                             <div class="input-group">
@@ -1666,6 +1666,7 @@
                             App.state.availableFunctions = functions; // Store fetched functions in state
 
                             const agents = Array.isArray(agentsJson) ? agentsJson : agentsJson.agents || [];
+                            App.state.availableAgents = agents; // Store fetched agents in state
 
                             App.ui.populateFunctionCheckboxes(functions, 'qs-function-selector-container');
 
@@ -1749,12 +1750,13 @@
                                 configId: agentConfigId
                             });
 
-                            App.state.currentSessionTools = App.state.availableFunctions.map(f => f.function); // Bind all available functions for now
-                            App.dom.qs.chatIdValue.textContent = newChatId; // Update the displayed chat ID
+                            App.state.currentSessionTools = App.state.availableFunctions.map(f => f.function);
+                            // App.state.currentSessionTools = [];
+
+                            App.dom.qs.chatIdValue.textContent = newChatId;
                             App.dom.qs.chatIdDisplay.style.display = 'block';
 
                             App.ui.switchToAgentChatView(agentTitle, data.data.answer);
-
                         } else {
                             App.ui.showError(App.dom.qs.configResponseEl, new Error('Failed to instantiate agent session. Invalid response from server.'));
                             App.dom.qs.chatIdDisplay.style.display = 'none';
@@ -2185,32 +2187,8 @@
                             return;
                         }
 
-                        const displayString = typeof result.data === 'object' ? JSON.stringify(result.data, null, 2) : String(result.data);
-                        const tokenRegex = /("Authorization":\s*"Bearer\s+)([^"]+)"/i;
-                        const match = displayString.match(tokenRegex);
-
-                        if (match) {
-                            const maskedString = displayString.replace(match[2], '[...masked for security...]');
-                            let wrapper = element.closest('.response-viewer-wrapper');
-                            if (!wrapper) {
-                                wrapper = document.createElement('div');
-                                wrapper.className = 'response-viewer-wrapper';
-                                element.parentNode.insertBefore(wrapper, element);
-                                wrapper.appendChild(element);
-
-                                const toggleBtn = document.createElement('button');
-                                toggleBtn.className = 'btn-toggle-token';
-                                wrapper.appendChild(toggleBtn);
-                            }
-                            const toggleBtn = wrapper.querySelector('.btn-toggle-token');
-                            element.dataset.unmasked = displayString;
-                            element.dataset.masked = maskedString;
-                            element.textContent = maskedString;
-                            toggleBtn.textContent = 'Show Token';
-                            toggleBtn.dataset.state = 'masked';
-                        } else {
-                            element.textContent = displayString;
-                        }
+                        const jsonString = typeof result.data === 'object' ? JSON.stringify(result.data, null, 2) : String(result.data);
+                        element.textContent = jsonString;
                     },
 
                     switchToAgentChatView(agentTitle, initialMessage) {
@@ -2405,8 +2383,11 @@
                                 // --- FIX START ---
                                 // Use the correct set of functions based on whether we are in an agent session or a manual one.
                                 if (App.state.isAgentSession) {
-                                    // For agents, use the tools bound to the agent's session
-                                    if (App.state.currentSessionTools && App.state.currentSessionTools.length > 0) {
+                                    // For agents, only show functions if we have captured them from an actual request
+                                    if (App.state.lastChatCompletionBody?.call) {
+                                        bodyJson.call = App.state.lastChatCompletionBody.call;
+                                    } else if (App.state.currentSessionTools && App.state.currentSessionTools.length > 0) {
+                                        // Fallback: show current session tools but indicate they're inferred
                                         bodyJson.call = App.state.currentSessionTools;
                                     } else {
                                         delete bodyJson.call;
@@ -2420,11 +2401,7 @@
                                     }
                                 }
                                 // --- FIX END ---
-                                if (App.state.sessionFunctions.length > 0) {
-                                    bodyJson.call = App.state.sessionFunctions.map(f => f.function);
-                                } else {
-                                    delete bodyJson.call;
-                                }
+
                                 if (App.state.modelApiKeyOverride.trim()) {
                                     bodyJson.apiKey = App.state.isApiKeyVisible ? App.state.modelApiKeyOverride : '[...masked for security...]';
                                 } else {
@@ -3173,135 +3150,295 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                         sessionStorage.removeItem('oauth_client_id');
                     },
 
+                    // --- START: NEW PARSER INTEGRATION ---
+                    /**
+                     * Transforms markdown text into a structured agent JSON format.
+                     * This robust parser uses a context stack to handle complex nested structures,
+                     * multi-line values, and various markdown patterns.
+                     * @param {string} markdownText - The markdown content of the agent definition.
+                     * @param {object} metadata - Additional metadata like id, title, version.
+                     * @returns {object} The structured JSON object for the agent.
+                     */
                     transformMarkdownToAgentJson(markdownText, metadata) {
+                        // Helper: UTF-8-safe base64 encode
+                        const encodeB64 = (str) => {
+                            try { return btoa(unescape(encodeURIComponent(str))); }
+                            catch (e) { return btoa(str); }
+                        };
+                        // Escape angle brackets in visible text to avoid HTML stripping
+                        const escapeAngles = (s) => typeof s === 'string' ? s.replace(/</g, '\\u003C').replace(/>/g, '\\u003E') : s;
+
                         try {
-                            const lines = markdownText.split('\n');
-                            let agentName = metadata.title || (markdownText.match(/\*\*Name:\*\*\s*(.*)/) || [])[1]?.trim() || "AI Assistant";
-                            let agentVersion = metadata.version || (markdownText.match(/\*\*Version:\*\*\s*(.*)/) || [])[1]?.trim() || "1.0.0";
-                            const rootKey = agentName.toLowerCase().replace(/\s+/g, '_');
-                            const root = { [rootKey]: { name: agentName, version: agentVersion, features: {}, commands: { prefix: "/", commands: {} }, rules: [], preferences: {}, formats: {}, init: "" } };
-                            const agent = root[rootKey];
-                            let currentSection = '', currentSubSection = '', currentSubSubSection = '', currentSkill = null, currentPrompt = null, inCodeBlock = false, codeBlockContent = '', collectingText = [], currentRuleOrSkill = null;
-                            for (const line of lines) {
+                            const text = markdownText || '';
+                            const lines = text.split(/\r?\n/);
+
+                            const toCamel = (s) => {
+                                if (!s) return '';
+                                return s.trim()
+                                    .replace(/[^\w\s&]+/g, '')
+                                    .replace(/&/g, 'And')
+                                    .split(/\s+/)
+                                    .map((w, i) => i === 0 ? w.toLowerCase() : (w[0]?.toUpperCase() + w.slice(1)))
+                                    .join('');
+                            };
+
+                            const normalizeValue = (v) => {
+                                if (typeof v !== 'string') return v;
+                                const t = v.trim();
+                                if (/^(1|enabled|yes)$/i.test(t)) return true;
+                                if (/^(0|not available|no|none)$/i.test(t)) return false;
+                                return t;
+                            };
+
+                            // Root key: prefer metadata.id, else H1 title fallback
+                            const h1 = (text.match(/^\s*#\s*(.+)$/m) || [, null])[1];
+                            const rootKey = (metadata && metadata.id) ? String(metadata.id) : (h1 ? toCamel(h1) : 'agent');
+                            const root = { [rootKey]: Object.assign({}, metadata || {}) };
+                            if (!root[rootKey].name) root[rootKey].name = h1 || metadata?.title || rootKey;
+
+                            // parser state
+                            const contextStack = [{ level: 0, obj: root[rootKey] }];
+                            const listParents = {}; // indent -> parent object for nested bullets
+
+                            // multiline and fences
+                            let inFence = false, fenceMarker = '', fenceLang = '', fenceBuffer = [];
+                            let inInlineSparql = false, inlineBuffer = [];
+
+                            let multilineKey = null, multilineTarget = null, multilineBuf = [];
+
+                            const commitMultiline = () => {
+                                if (multilineKey && multilineTarget) {
+                                    const full = multilineBuf.join('\n');
+                                    if (full && full.length) {
+                                        if (typeof multilineTarget[multilineKey] === 'string' && multilineTarget[multilineKey].length) {
+                                            multilineTarget[multilineKey] = (multilineTarget[multilineKey] + '\n' + full).trim();
+                                        } else {
+                                            multilineTarget[multilineKey] = full;
+                                        }
+                                    }
+                                }
+                                multilineKey = null; multilineTarget = null; multilineBuf = [];
+                            };
+
+                            const closeInlineSparql = () => {
+                                if (!inInlineSparql) return;
+                                const codeText = inlineBuffer.join('\n'); // verbatim
+                                const b64 = encodeB64(codeText);
+                                const ctx = contextStack[contextStack.length - 1];
+                                if (Array.isArray(ctx.obj) && ctx.obj.length > 0 && typeof ctx.obj[ctx.obj.length - 1] === 'object') {
+                                    const lastObj = ctx.obj[ctx.obj.length - 1];
+                                    lastObj.query = escapeAngles(codeText);
+                                    lastObj.query_b64 = b64;
+                                } else if (multilineKey && multilineTarget) {
+                                    multilineBuf.push(codeText);
+                                    commitMultiline();
+                                } else if (typeof ctx.obj === 'object') {
+                                    if (!ctx.obj._inlineSparql) ctx.obj._inlineSparql = [];
+                                    ctx.obj._inlineSparql.push({ text: escapeAngles(codeText), b64 });
+                                }
+                                inInlineSparql = false; inlineBuffer = [];
+                            };
+
+                            const current = () => contextStack[contextStack.length - 1];
+
+                            for (const rawLine of lines) {
+                                const line = rawLine;
                                 const trimmed = line.trim();
-                                if (trimmed.startsWith('```')) {
-                                    inCodeBlock = !inCodeBlock;
-                                    if (!inCodeBlock && codeBlockContent) {
-                                        if (currentPrompt) {
-                                            const lastStep = currentPrompt.steps?.[currentPrompt.steps.length - 1];
-                                            if (lastStep && !lastStep.query) lastStep.query = codeBlockContent.trim();
-                                            else if (!currentPrompt.response) currentPrompt.response = codeBlockContent.trim();
-                                        } else if (currentRuleOrSkill?.steps) {
-                                            const lastStep = currentRuleOrSkill.steps[currentRuleOrSkill.steps.length - 1];
-                                            if (typeof lastStep === 'string') currentRuleOrSkill.steps[currentRuleOrSkill.steps.length - 1] = { instruction: lastStep, query: codeBlockContent.trim() };
-                                            else if (typeof lastStep === 'object') lastStep.query = codeBlockContent.trim();
+
+                                // Fenced code handling
+                                const fenceMatch = trimmed.match(/^(`{3,}|~{3,})(.*)$/);
+                                if (fenceMatch) {
+                                    // finalize any inline SPARQL
+                                    if (inInlineSparql) closeInlineSparql();
+                                    commitMultiline();
+                                    const marker = fenceMatch[1], info = fenceMatch[2].trim();
+                                    if (!inFence) {
+                                        inFence = true; fenceMarker = marker; fenceLang = info; fenceBuffer = [];
+                                    } else if (marker === fenceMarker) {
+                                        inFence = false;
+                                        const codeText = fenceBuffer.join('\n'); // verbatim
+                                        const b64 = encodeB64(codeText);
+                                        const looksLikeSparql = /^\s*SPARQL\b/i.test(codeText) || /\bPREFIX\b/i.test(codeText) || /\bBASE\b/i.test(codeText) || fenceLang.includes('sparql');
+
+                                        const ctx = current();
+                                        if (Array.isArray(ctx.obj) && ctx.obj.length > 0 && typeof ctx.obj[ctx.obj.length - 1] === 'object') {
+                                            const lastObj = ctx.obj[ctx.obj.length - 1];
+                                            if (looksLikeSparql) {
+                                                lastObj.query = escapeAngles(codeText);
+                                                lastObj.query_b64 = b64;
+                                            } else {
+                                                if (!lastObj._codeBlocks) lastObj._codeBlocks = [];
+                                                lastObj._codeBlocks.push({ lang: fenceLang || null, text: escapeAngles(codeText), b64 });
+                                            }
+                                        } else if (multilineKey && multilineTarget) {
+                                            multilineBuf.push(codeText);
+                                            commitMultiline();
+                                        } else if (typeof ctx.obj === 'object') {
+                                            if (!ctx.obj._codeBlocks) ctx.obj._codeBlocks = [];
+                                            ctx.obj._codeBlocks.push({ lang: fenceLang || null, text: escapeAngles(codeText), b64 });
                                         }
-                                        codeBlockContent = '';
+                                        fenceMarker = ''; fenceLang = ''; fenceBuffer = [];
+                                    } else {
+                                        fenceBuffer.push(line);
                                     }
                                     continue;
                                 }
-                                if (inCodeBlock) { codeBlockContent += line + '\n'; continue; }
-                                if (!trimmed && collectingText.length === 0) continue;
-                                const h2Match = trimmed.match(/^##\s+(.*)/), h3Match = trimmed.match(/^###\s+(.*)/), h4Match = trimmed.match(/^####\s+(.*)/);
-                                if (h2Match || h3Match) {
-                                    if (collectingText.length > 0 && currentSubSection === 'initialization') { agent.init = collectingText.join(' ').trim(); collectingText = []; }
-                                    currentSection = (h2Match || h3Match)[1].toLowerCase().replace(/\s+/g, '_');
-                                    currentSubSection = ''; currentSubSubSection = ''; currentSkill = null; currentPrompt = null; currentRuleOrSkill = null;
+                                if (inFence) { fenceBuffer.push(line); continue; }
+
+                                // Inline SPARQL start
+                                if (!inInlineSparql && trimmed.match(/^(SPARQL\b|PREFIX\b|BASE\b|@prefix\b)/i)) {
+                                    commitMultiline();
+                                    inInlineSparql = true; inlineBuffer = [line];
                                     continue;
                                 }
-                                if (h4Match) { currentSubSection = h4Match[1].toLowerCase().replace(/\s+/g, '_'); currentSubSubSection = ''; collectingText = []; continue; }
-                                if (currentSubSection === 'features' || currentSection.includes('overview')) {
-                                    const bulletMatch = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/);
-                                    if (bulletMatch) {
-                                        const key = bulletMatch[1], value = bulletMatch[2].trim(), keyLower = key.toLowerCase();
-                                        let category = 'general';
-                                        if (keyLower.includes('knowledge') || keyLower.includes('pdf') || keyLower.includes('server') || keyLower.includes('data')) category = 'product_knowledge';
-                                        else if (keyLower.includes('troubleshoot') || keyLower.includes('problem') || keyLower.includes('skill')) category = 'problem_solving';
-                                        else if (keyLower.includes('interactive') || keyLower.includes('engagement') || keyLower.includes('user')) category = 'user_engagement';
-                                        else if (keyLower.includes('dialogue')) category = 'interactive_dialogue';
-                                        if (!agent.features[category]) agent.features[category] = {};
-                                        if (key === 'Interactive') { agent.features.user_engagement = agent.features.user_engagement || {}; agent.features.user_engagement.interactive = "true"; agent.features.user_engagement.personalization = "true"; }
-                                        else if (key === 'Internet Access') { agent.features.user_engagement = agent.features.user_engagement || {}; agent.features.user_engagement.internet = value.toLowerCase().includes('not') ? "false" : "true"; }
-                                        else if (key === 'Enabled' && category === 'interactive_dialogue') { agent.features.interactive_dialogue = agent.features.interactive_dialogue || {}; agent.features.interactive_dialogue.enabled = "true"; agent.features.interactive_dialogue.description = value; }
-                                        else agent.features[category][key] = value;
+                                if (inInlineSparql) {
+                                    if (!trimmed || trimmed.match(/^(#{1,6})\s+/) || /^-{3,}\s*$/.test(trimmed) || /^\s*[-*]\s+/.test(line) || /^\s*\d+\.\s+/.test(trimmed)) {
+                                        closeInlineSparql();
+                                    } else {
+                                        inlineBuffer.push(line);
+                                        continue;
                                     }
-                                } else if (currentSection.includes('query_processing')) {
-                                    if (!agent.features.fine_tuning) agent.features.fine_tuning = { enabled: "true", description: "", responseScope: "", sparqlProcessingBehavior: [], semantic_similarity_analysis: {}, predefined_skills: {}, predefined_prompts: [] };
-                                    const fineTuning = agent.features.fine_tuning;
-                                    if (currentSubSection === 'fine-tuning') {
-                                        const bulletMatch = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/), numberedMatch = trimmed.match(/^\s*\d+\.\s+(.*)/);
-                                        if (bulletMatch) {
-                                            const key = bulletMatch[1].toLowerCase().replace(/[\s-]+/g, ''), value = bulletMatch[2].trim();
-                                            if (key === 'enabled') fineTuning.enabled = value.toLowerCase() === 'true' ? "true" : "false";
-                                            else if (key === 'description') fineTuning.description = value;
-                                            else if (key === 'responsescope') fineTuning.responseScope = value;
-                                        } else if (numberedMatch && !currentPrompt && !currentSkill) fineTuning.sparqlProcessingBehavior.push(numberedMatch[1].trim());
-                                    } else if (trimmed.includes('Semantic Similarity Analysis:') || currentSubSubSection === 'semantic_similarity') {
-                                        if (trimmed.includes('Semantic Similarity Analysis:')) currentSubSubSection = 'semantic_similarity';
-                                        else {
-                                            const bulletMatch = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/);
-                                            if (bulletMatch) fineTuning.semantic_similarity_analysis[bulletMatch[1].toLowerCase().replace(/[\s-]+/g, '_')] = bulletMatch[2].trim();
-                                            else if (trimmed.startsWith('-')) fineTuning.semantic_similarity_analysis.inference_mechanism = (fineTuning.semantic_similarity_analysis.inference_mechanism || '') + ' ' + trimmed.substring(1).trim();
-                                        }
-                                    } else if (trimmed.includes('Predefined Skills:') || currentSubSubSection === 'predefined_skills') {
-                                        if (trimmed.includes('Predefined Skills:')) currentSubSubSection = 'predefined_skills';
-                                        else if (currentSubSubSection === 'predefined_skills') {
-                                            const skillNameMatch = trimmed.match(/^- \*\*(.*?)\*\*/);
-                                            if (skillNameMatch) { currentSkill = []; fineTuning.predefined_skills[skillNameMatch[1].replace(/\s+/g, '_')] = currentSkill; currentRuleOrSkill = null; }
-                                            else if (currentSkill) {
-                                                const ruleMatch = trimmed.match(/^\s*(\d+)\.\s+([^:]+):\s*(.*)$/), subBulletMatch = trimmed.match(/^\s*-\s+(.*)/);
-                                                if (ruleMatch) { currentRuleOrSkill = { rule: ruleMatch[2].trim(), instruction: ruleMatch[3].trim() }; currentSkill.push(currentRuleOrSkill); }
-                                                else if (subBulletMatch && currentRuleOrSkill) { if (!currentRuleOrSkill.steps) currentRuleOrSkill.steps = []; currentRuleOrSkill.steps.push(subBulletMatch[1].trim()); }
-                                                else if (trimmed && !trimmed.startsWith('#') && currentRuleOrSkill) {
-                                                    if (trimmed.includes('Example Workflow:')) { currentRuleOrSkill = { rule: 'Example Workflow', steps: [] }; currentSkill.push(currentRuleOrSkill); }
-                                                    else if (currentRuleOrSkill.instruction !== undefined && !currentRuleOrSkill.steps) currentRuleOrSkill.instruction = (currentRuleOrSkill.instruction + ' ' + trimmed).trim();
-                                                }
-                                            }
-                                        }
-                                    } else if (trimmed.includes('predefined_prompts:') || currentSubSubSection === 'predefined_prompts') {
-                                        if (trimmed.includes('predefined_prompts:')) currentSubSubSection = 'predefined_prompts';
-                                        else if (currentSubSubSection === 'predefined_prompts') {
-                                            if (trimmed.startsWith('- ') && !trimmed.includes('**')) { currentPrompt = { hint: trimmed.substring(2).trim(), steps: [] }; fineTuning.predefined_prompts.push(currentPrompt); }
-                                            else if (currentPrompt) {
-                                                const numberedMatch = trimmed.match(/^\s*(\d+)\.\s+(.*)/), hintMatch = trimmed.match(/^-?\s*\*\*[Hh]int:\*\*\s*(.*)/), promptMatch = trimmed.match(/^-?\s*\*\*[Pp]rompt:\*\*\s*(.*)/), responseMatch = trimmed.match(/^-?\s*\*\*[Rr]esponse:\*\*\s*(.*)/);
-                                                if (numberedMatch) {
-                                                    if (currentPrompt.response !== undefined && !numberedMatch[2].includes(':')) currentPrompt.response += '\n' + trimmed;
-                                                    else currentPrompt.steps.push({ step: parseInt(numberedMatch[1]), instruction: numberedMatch[2].trim() });
-                                                } else if (hintMatch) currentPrompt.hint = hintMatch[1].trim();
-                                                else if (promptMatch) currentPrompt.prompt = promptMatch[1].trim();
-                                                else if (responseMatch) currentPrompt.response = responseMatch[1].trim() || "";
-                                            }
-                                        }
+                                }
+
+                                // blank / separators / images
+                                if (!trimmed || /^-{3,}$/.test(trimmed) || /^\s*!?\[/.test(trimmed)) { commitMultiline(); continue; }
+
+                                // Heading
+                                const hMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+                                if (hMatch) {
+                                    commitMultiline();
+                                    const level = hMatch[1].length;
+                                    const title = hMatch[2].trim();
+                                    const key = toCamel(title);
+                                    while (contextStack.length > 0 && contextStack[contextStack.length - 1].level >= level) contextStack.pop();
+                                    const parent = contextStack[contextStack.length - 1].obj;
+                                    // create or reuse
+                                    if (!Object.prototype.hasOwnProperty.call(parent, key)) parent[key] = {};
+                                    else if (Array.isArray(parent[key])) parent[key] = { items: parent[key] };
+                                    contextStack.push({ level, obj: parent[key], key });
+                                    // reset list parents
+                                    for (const k in listParents) delete listParents[k];
+                                    continue;
+                                }
+
+                                // Bold key:value
+                                const kv = trimmed.match(/^\s*[-*]?\s*\*\*(.+?)\*\*\s*:\s*(.*)$/);
+                                if (kv) {
+                                    commitMultiline();
+                                    const k = toCamel(kv[1].trim());
+                                    const v = kv[2] || '';
+                                    let target = current().obj;
+                                    if (Array.isArray(target)) {
+                                        const obj = {}; obj[k] = normalizeValue(v); target.push(obj);
+                                        multilineTarget = obj; multilineKey = k; multilineBuf = [v];
+                                    } else if (typeof target === 'object') {
+                                        if (!target[k] || target[k] === '') target[k] = normalizeValue(v);
+                                        multilineTarget = target; multilineKey = k; multilineBuf = [v];
                                     }
-                                } else if (currentSubSection === 'functions') {
-                                    if (!agent.features.functions) agent.features.functions = { description: "", list: [] };
-                                    const descMatch = trimmed.match(/^- \*\*Description:\*\*\s*(.*)/), listMatch = trimmed.match(/^- \*\*List:\*\*\s*(.*)/), functionMatch = trimmed.match(/^- `(.*)`/);
-                                    if (descMatch) agent.features.functions.description = descMatch[1].trim();
-                                    else if (listMatch) agent.features.functions.description += '. ' + listMatch[1].trim();
-                                    else if (functionMatch) agent.features.functions.list.push({ name: functionMatch[1].trim(), description: functionMatch[1].trim().replace(/_/g, ' ') });
-                                } else if (currentSubSection.includes('commands')) {
-                                    const prefixMatch = trimmed.match(/^- \*\*Prefix:\*\*\s*(.*)/), cmdMatch1 = trimmed.match(/^- `(\/\w+)`:\s*(.*)/), cmdMatch2 = trimmed.match(/^- \*\*(.+?):\*\*\s*`([^`]+)`\s*[-:]?\s*(.*)/);
-                                    if (prefixMatch) agent.commands.prefix = prefixMatch[1].trim();
-                                    else if (cmdMatch1) agent.commands.commands[cmdMatch1[1]] = cmdMatch1[2].trim();
-                                    else if (cmdMatch2) agent.commands.commands[cmdMatch2[2]] = cmdMatch2[3].trim();
-                                } else if (currentSubSection === 'rules' && trimmed.startsWith('- ')) agent.rules.push(trimmed.substring(2).trim());
-                                else if (currentSubSection === 'preferences') { const m = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/); if (m) agent.preferences[m[1].toLowerCase().replace(/\s+/g, '_')] = m[2].trim(); }
-                                else if (currentSubSection === 'formats') { const m = trimmed.match(/^- \*\*(.*?):\*\*\s*(.*)/); if (m) agent.formats[m[1].toLowerCase().replace(/[\s-]+/g, '-')] = m[2].trim(); }
-                                else if (currentSubSection === 'initialization' && !trimmed.startsWith('#') && trimmed) collectingText.push(trimmed);
+                                    continue;
+                                }
+
+                                // Bullet handling
+                                const bullet = rawLine.match(/^(\s*)[-*]\s+(.*)$/);
+                                if (bullet) {
+                                    commitMultiline();
+                                    const indent = bullet[1].length;
+                                    const content = bullet[2].trim();
+                                    const ctxObj = current().obj;
+                                    const findListParent = (ind) => {
+                                        let candidate = ind;
+                                        while (candidate >= 0) {
+                                            if (listParents[candidate]) return listParents[candidate];
+                                            candidate -= 1;
+                                        }
+                                        return ctxObj;
+                                    };
+
+                                    const boldTitle = content.match(/^\*\*(.+?)\*\*\s*:?$/);
+                                    const boldKv = content.match(/^\*\*(.+?)\*\*\s*:\s*(.*)$/);
+
+                                    if (boldTitle) {
+                                        const title = boldTitle[1].trim();
+                                        const key = toCamel(title);
+                                        const parentForThis = findListParent(indent) || ctxObj;
+                                        if (!parentForThis || typeof parentForThis !== 'object' || Array.isArray(parentForThis)) {
+                                            if (typeof parentForThis === 'object') { parentForThis.list = parentForThis.list || []; parentForThis.list.push(title); listParents[indent] = parentForThis; }
+                                        } else {
+                                            if (!Object.prototype.hasOwnProperty.call(parentForThis, key) || typeof parentForThis[key] !== 'object') parentForThis[key] = {};
+                                            listParents[indent + 1] = parentForThis[key];
+                                            listParents[indent] = parentForThis[key];
+                                        }
+                                        continue;
+                                    } else if (boldKv) {
+                                        const subK = toCamel(boldKv[1].trim());
+                                        const subV = boldKv[2] || '';
+                                        const attachTo = findListParent(indent) || ctxObj;
+                                        if (attachTo && typeof attachTo === 'object' && !Array.isArray(attachTo)) {
+                                            attachTo[subK] = normalizeValue(subV);
+                                            multilineTarget = attachTo; multilineKey = subK; multilineBuf = [subV];
+                                        } else {
+                                            if (!ctxObj.list) ctxObj.list = [];
+                                            const o = {}; o[subK] = normalizeValue(subV); ctxObj.list.push(o);
+                                            multilineTarget = o; multilineKey = subK; multilineBuf = [subV];
+                                        }
+                                        continue;
+                                    } else {
+                                        const attachTo = findListParent(indent) || ctxObj;
+                                        if (Array.isArray(attachTo)) attachTo.push(content);
+                                        else if (typeof attachTo === 'object') { if (!attachTo.list) attachTo.list = []; attachTo.list.push(content); }
+                                        else { if (!ctxObj.list) ctxObj.list = []; ctxObj.list.push(content); }
+                                        continue;
+                                    }
+                                }
+
+                                // Numbered list
+                                const numMatch = trimmed.match(/^\s*\d+\.\s+(.*)$/);
+                                if (numMatch) {
+                                    commitMultiline();
+                                    const txt = numMatch[1].trim();
+                                    const curr = current().obj;
+                                    if (Array.isArray(curr)) curr.push(txt);
+                                    else { if (!curr.steps) curr.steps = []; curr.steps.push(txt); }
+                                    continue;
+                                }
+
+                                // Multiline continuation for bold-values
+                                if (multilineKey && multilineTarget) {
+                                    multilineBuf.push(line);
+                                    continue;
+                                }
+
+                                // Otherwise attach as description
+                                const curr = current().obj;
+                                if (typeof curr === 'object' && !Array.isArray(curr) && trimmed) {
+                                    curr.description = ((curr.description || '') + (curr.description ? '\n' : '') + trimmed).trim();
+                                }
                             }
-                            if (collectingText.length > 0 && currentSubSection === 'initialization') agent.init = collectingText.join(' ').trim();
-                            if (!agent.init) agent.init = `Upon activation, the ${agentName} greets the user, shares their current capabilities and preferences, and awaits further instructions.`;
-                            if (agent.features.fine_tuning && !agent.features.query_optimization) agent.features.query_optimization = {};
-                            if (metadata.functions?.length) {
-                                agent.features.functions = {
-                                    description: agent.features.functions?.description || "Functions are invoked based on user input or as a fallback.",
-                                    list: metadata.functions.map(f => typeof f === 'string' ? { name: f, description: f.split('.').pop().replace(/_/g, ' ') } : { name: f.function || f.name, description: f.title || f.description || (f.function || f.name).split('.').pop().replace(/_/g, ' ') })
-                                };
-                            } else if (agent.features.functions) agent.features.functions.list = [];
-                            agent.id = metadata.id; agent.creation_date = metadata.creationDate;
+
+                            // finalize any inline or multiline
+                            if (inInlineSparql) closeInlineSparql();
+                            commitMultiline();
+
+                            // Post-process: move overview name/version to root if present
+                            const top = root[rootKey];
+                            if (top.overview && typeof top.overview === 'object') {
+                                if (top.overview.name) top.name = top.overview.name;
+                                if (top.overview.version) top.version = top.overview.version;
+                                delete top.overview;
+                            }
+
+                            // Merge metadata.functions if provided
+                            if (metadata && Array.isArray(metadata.functions) && metadata.functions.length && !top.functions) {
+                                top.functions = { description: 'Functions are invoked in a specific order based on user input or as a fallback.', list: metadata.functions.map(f => f.function || f.name || f) };
+                            }
+
                             return root;
-                        } catch (error) { console.error("Error parsing Markdown to Agent JSON:", error); throw error; }
+                        } catch (err) {
+                            console.error('transformMarkdownToAgentJson error:', err);
+                            throw err;
+                        }
                     },
+                    // --- END: NEW PARSER INTEGRATION ---
 
                     transformMarkdownToOpenAIJson(markdownText, metadata) {
                         try {
