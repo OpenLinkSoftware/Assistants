@@ -1722,14 +1722,13 @@
                         });
                     },
 
+                    // --- FIX START: Add logic to handle optional session title ---
                     async handleInstantiateAgent(button) {
                         const agentSelect = document.getElementById('qs-agent-select');
                         const agentConfigId = agentSelect.value;
                         const altQuestion = document.getElementById('qs-alt-question').value;
                         const responseEl = App.dom.qs.configResponseEl;
-                        // --- FIX START: Read the new title input ---
                         const newTitle = document.getElementById('qs-agent-title-input').value.trim();
-                        // --- FIX END ---
 
                         if (!agentConfigId) {
                             App.ui.showError(responseEl, new Error('Please select an agent.'));
@@ -1749,11 +1748,7 @@
                             if (altQuestion.trim()) {
                                 instantiationBody.alt_question = altQuestion;
                             }
-                            // --- FIX START: Add title to the request body if provided ---
-                            if (newTitle) {
-                                instantiationBody.title = newTitle;
-                            }
-                            // --- FIX END ---
+                            // Do NOT send title here. It's handled in the next step.
 
                             const { data: instantiationResponse, error: instantiationError } = await App.makeApiCall({
                                 url: `${App.state.endpointUrl}/chatCompletion`,
@@ -1768,7 +1763,23 @@
                             const newChatId = instantiationResponse?.data?.chat_id;
                             if (!newChatId) throw new Error('Failed to get a new session ID from the server.');
 
-                            // STAGE 2: Use the new session ID to fetch its state from the correct /getTopic endpoint.
+                            // STAGE 2 (NEW): Update the title if one was provided.
+                            if (newTitle) {
+                                button.textContent = 'Setting Title...';
+                                const { error: titleError } = await App.makeApiCall({
+                                    url: `${App.state.endpointUrl}/chatTopic?chat_id=${newChatId}`,
+                                    method: 'POST',
+                                    isAuthenticated: true,
+                                    body: { title: newTitle },
+                                    responseElement: null, // Don't display this intermediate response
+                                });
+                                if (titleError) {
+                                    // Warn but don't fail the whole process
+                                    console.warn(`Could not set custom title: ${titleError.message}`);
+                                }
+                            }
+
+                            // STAGE 3: Use the new session ID to fetch its state from the correct /getTopic endpoint.
                             button.textContent = 'Syncing Tools...';
                             const { data: topicResponse, error: topicError } = await App.makeApiCall({
                                 url: `${App.state.endpointUrl}/getTopic?chat_id=${newChatId}`,
@@ -1779,7 +1790,7 @@
 
                             if (topicError) throw new Error(`Failed to sync session state: ${topicError.message}`);
 
-                            // STAGE 3: Extract the 'funcs' array from the response and update client state.
+                            // STAGE 4: Extract data and update client state.
                             const sessionState = topicResponse?.data;
                             const agentSpecificTools = sessionState?.funcs || [];
 
@@ -1787,16 +1798,13 @@
                             App.updateState('isAgentSession', true);
                             App.updateState('currentAgent', { title: agentTitle, chatId: newChatId, configId: agentConfigId });
                             App.state.currentSessionTools = agentSpecificTools;
-                            // --- FIX START: Update global title state if a new one was provided ---
-                            if (newTitle) {
-                                App.updateState('title', newTitle);
-                            } else if (sessionState?.title) {
-                                // Otherwise, use the title from the new session
+
+                            // Update global title state with the final title from the server
+                            if (sessionState?.title) {
                                 App.updateState('title', sessionState.title);
                             }
-                            // --- FIX END ---
 
-                            // STAGE 4: Proceed to chat view.
+                            // STAGE 5: Proceed to chat view.
                             App.dom.qs.chatIdValue.textContent = newChatId;
                             App.dom.qs.chatIdDisplay.style.display = 'block';
                             App.ui.switchToAgentChatView(agentTitle, instantiationResponse.data.answer);
@@ -1808,6 +1816,7 @@
                             button.textContent = originalButtonText;
                         }
                     },
+                    // --- FIX END ---
 
                     async handleAgentChatCompletion() {
                         const inputEl = App.dom.qs.agentChatInput;
