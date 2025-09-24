@@ -1067,7 +1067,6 @@
                                         <option>Run Step 3 to load agents...</option>
                                     </select>
                                 </div>
-                                <!-- FIX START: Add Model Selection Dropdown in the correct location -->
                                 <div class="input-group">
                                     <label for="qs-agent-model-select">Model</label>
                                     <select id="qs-agent-model-select" class="global-state-input"
@@ -1075,7 +1074,6 @@
                                         <option>Run Step 3 to populate models...</option>
                                     </select>
                                 </div>
-                                <!-- FIX END -->
                                 <button id="qs-run-instantiate-agent" class="btn btn-primary">Instantiate Agent</button>
                                 <div class="input-group">
                                     <label for="qs-alt-question">Initial Question (Optional)</label>
@@ -1091,7 +1089,6 @@
                             <div id="agent-interaction-block" style="display: none;">
                                 <h4 style="margin-top:0;">Chat with <strong id="active-agent-name"
                                         style="color: var(--color-primary);"></strong></h4>
-                                <!-- FIX START: Add Model API Key input here -->
                                 <div class="input-group">
                                     <label for="qs-agent-model-key">Model API Key (Optional Override)</label>
                                     <input type="password" id="qs-agent-model-key" class="global-state-input"
@@ -1100,7 +1097,6 @@
                                     <button class="api-key-toggle-vis" title="Toggle API Key Visibility">
                                     </button>
                                 </div>
-                                <!-- FIX END -->
                                 <div class="input-group">
                                     <label for="qs-agent-chat-input">Your Message</label>
                                     <div style="display: flex; gap: 0.5rem;">
@@ -1445,7 +1441,7 @@
 
                     if (valueChanged && ['chatId', 'model', 'question', 'title', 'top_p', 'temperature',
                         'modelApiKeyOverride', 'sessionFunctions', 'isAgentSession',
-                        'currentAgent'].includes(key)) {
+                        'currentAgent', 'lastChatCompletionBody'].includes(key)) {
                         this.ui.syncApiCards();
                     }
                 },
@@ -1487,6 +1483,7 @@
                     }
                 },
 
+                // --- FIX START: Enhanced makeApiCall to detect application-level errors ---
                 async makeApiCall({ url, method, body = null, isAuthenticated = false, responseElement, triggerButton = null }) {
                     const originalButtonText = triggerButton ? triggerButton.textContent : '';
                     if (triggerButton) {
@@ -1525,15 +1522,25 @@
                         }
 
                         const responseText = await response.text();
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status} ${response.statusText}: ${responseText}`);
-                        }
 
                         let responseData;
                         try {
                             responseData = JSON.parse(responseText);
                         } catch (e) {
-                            responseData = responseText;
+                            // If parsing fails, it might be a non-JSON error message from the server
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status} ${response.statusText}: ${responseText}`);
+                            }
+                            responseData = responseText; // Treat as plain text success
+                        }
+
+                        // Check for application-level errors even in a 200 OK response
+                        if (responseData && responseData.error) {
+                            throw new Error(responseData.error);
+                        }
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status} ${response.statusText}: ${responseText}`);
                         }
 
                         const resultData = { status: response.status, statusText: response.statusText, data: responseData };
@@ -1550,6 +1557,7 @@
                         }
                     }
                 },
+                // --- FIX END ---
 
                 handlers: {
                     handleOpenApiUrlInteraction(event) {
@@ -1636,6 +1644,7 @@
                             App.updateState('chatId', newChatId);
                             App.updateState('isAgentSession', false);
                             App.updateState('currentAgent', null);
+                            App.state.currentSessionTools = [];
                             App.dom.qs.chatIdValue.textContent = newChatId;
                             App.dom.qs.chatIdDisplay.style.display = 'block';
                             App.ui.scrollToStep('qs-step-3-list-resources');
@@ -1663,18 +1672,16 @@
                             const agentsJson = await agentsResponse.json();
 
                             const functions = Array.isArray(functionsJson) ? functionsJson : functionsJson.functions || [];
-                            App.state.availableFunctions = functions; // Store fetched functions in state
+                            App.state.availableFunctions = functions;
 
                             const agents = Array.isArray(agentsJson) ? agentsJson : agentsJson.agents || [];
-                            App.state.availableAgents = agents; // Store fetched agents in state
-
-                            App.ui.populateFunctionCheckboxes(functions, 'qs-function-selector-container');
+                            App.state.availableAgents = agents;
 
                             App.ui.populateFunctionCheckboxes(functions, 'qs-function-selector-container');
                             App.ui.populateFunctionCheckboxes(functions, 'qs-agent-function-selector-container');
                             App.ui.populateModelDropdown('qs-update-model');
                             App.ui.populateModelDropdown('qs-agent-model');
-                            App.ui.populateModelDropdown('qs-agent-model-select'); // For agent instantiation
+                            App.ui.populateModelDropdown('qs-agent-model-select');
                             App.ui.populateAgentDropdown(agents);
 
                             responseEl.textContent = `Successfully loaded ${functions.length} function(s) and ${agents.length} agent(s).`;
@@ -1712,54 +1719,70 @@
                         const agentSelect = document.getElementById('qs-agent-select');
                         const agentConfigId = agentSelect.value;
                         const altQuestion = document.getElementById('qs-alt-question').value;
+                        const responseEl = App.dom.qs.configResponseEl;
 
                         if (!agentConfigId) {
-                            App.ui.showError(App.dom.qs.configResponseEl, new Error('Please select an agent.'));
+                            App.ui.showError(responseEl, new Error('Please select an agent.'));
                             return;
                         }
 
-                        const selectedOption = agentSelect.selectedOptions[0];
-                        const agentTitle = selectedOption.textContent;
+                        const originalButtonText = button.textContent;
+                        button.disabled = true;
+                        button.textContent = 'Instantiating...';
+                        App.ui.showLoading(responseEl);
 
-                        const body = { model: App.state.model, chat_id: agentConfigId };
-                        if (altQuestion.trim()) {
-                            body.alt_question = altQuestion;
-                        }
+                        try {
+                            // STAGE 1: Instantiate the agent to get a new session ID.
+                            const selectedOption = agentSelect.selectedOptions[0];
+                            const agentTitle = selectedOption.textContent;
+                            const instantiationBody = { model: App.state.model, chat_id: agentConfigId };
+                            if (altQuestion.trim()) {
+                                instantiationBody.alt_question = altQuestion;
+                            }
 
-                        const { data, error } = await App.makeApiCall({
-                            url: `${App.state.endpointUrl}/chatCompletion`,
-                            method: 'POST',
-                            isAuthenticated: true,
-                            body,
-                            responseElement: null, // We handle the response manually
-                            triggerButton: button
-                        });
-
-                        if (error) {
-                            App.ui.showError(App.dom.qs.configResponseEl, error);
-                            return;
-                        }
-
-                        if (data?.data?.chat_id) {
-                            const newChatId = data.data.chat_id;
-                            App.updateState('chatId', newChatId);
-                            App.updateState('isAgentSession', true);
-                            App.updateState('currentAgent', {
-                                title: agentTitle,
-                                chatId: newChatId,
-                                configId: agentConfigId
+                            const { data: instantiationResponse, error: instantiationError } = await App.makeApiCall({
+                                url: `${App.state.endpointUrl}/chatCompletion`,
+                                method: 'POST',
+                                isAuthenticated: true,
+                                body: instantiationBody,
+                                responseElement: null,
                             });
 
-                            App.state.currentSessionTools = App.state.availableFunctions.map(f => f.function);
-                            // App.state.currentSessionTools = [];
+                            if (instantiationError) throw instantiationError;
 
+                            const newChatId = instantiationResponse?.data?.chat_id;
+                            if (!newChatId) throw new Error('Failed to get a new session ID from the server.');
+
+                            // STAGE 2: Use the new session ID to fetch its state from the correct /getTopic endpoint.
+                            button.textContent = 'Syncing Tools...';
+                            const { data: topicResponse, error: topicError } = await App.makeApiCall({
+                                url: `${App.state.endpointUrl}/getTopic?chat_id=${newChatId}`,
+                                method: 'GET',
+                                isAuthenticated: true,
+                                responseElement: null,
+                            });
+
+                            if (topicError) throw new Error(`Failed to sync session state: ${topicError.message}`);
+
+                            // STAGE 3: Extract the 'funcs' array from the response and update client state.
+                            const sessionState = topicResponse?.data;
+                            const agentSpecificTools = sessionState?.funcs || [];
+
+                            App.updateState('chatId', newChatId);
+                            App.updateState('isAgentSession', true);
+                            App.updateState('currentAgent', { title: agentTitle, chatId: newChatId, configId: agentConfigId });
+                            App.state.currentSessionTools = agentSpecificTools; // This state is now correct
+
+                            // STAGE 4: Proceed to chat view.
                             App.dom.qs.chatIdValue.textContent = newChatId;
                             App.dom.qs.chatIdDisplay.style.display = 'block';
+                            App.ui.switchToAgentChatView(agentTitle, instantiationResponse.data.answer);
 
-                            App.ui.switchToAgentChatView(agentTitle, data.data.answer);
-                        } else {
-                            App.ui.showError(App.dom.qs.configResponseEl, new Error('Failed to instantiate agent session. Invalid response from server.'));
-                            App.dom.qs.chatIdDisplay.style.display = 'none';
+                        } catch (err) {
+                            App.ui.showError(responseEl, err);
+                        } finally {
+                            button.disabled = false;
+                            button.textContent = originalButtonText;
                         }
                     },
 
@@ -1767,10 +1790,7 @@
                         const inputEl = App.dom.qs.agentChatInput;
                         const question = inputEl.value.trim();
                         if (!question) return;
-                        // --- FIX START ---
-                        // Update the global state so the API explorer reflects this question.
                         App.updateState('question', question);
-                        // --- FIX END ---
 
                         App.ui.appendMessageToChatLog(question, 'user');
                         inputEl.value = '';
@@ -1778,28 +1798,22 @@
 
                         const body = {
                             question: question,
-                            chat_id: App.state.chatId, // Use the existing session ID
+                            chat_id: App.state.chatId,
                             model: App.state.model,
-                            call: App.state.currentSessionTools // Use tools bound to the current session
+                            call: App.state.currentSessionTools
                         };
-                        // --- FIX START ---
-                        // Read the optional override key from the new input in the agent chat UI.
                         const modelKeyOverride = document.getElementById('qs-agent-model-key').value;
                         if (modelKeyOverride.trim()) {
                             body.apiKey = modelKeyOverride;
                         }
-                        // --- FIX END ---
-                        // --- FIX START ---
-                        // Capture the exact request body before sending it.
                         App.updateState('lastChatCompletionBody', body);
-                        // --- FIX END ---
 
                         const { data, error } = await App.makeApiCall({
                             url: `${App.state.endpointUrl}/chatCompletion`,
                             method: 'POST',
                             isAuthenticated: true,
                             body,
-                            responseElement: null, // Manual UI updates
+                            responseElement: null,
                             triggerButton: App.dom.qs.agentChatSendBtn
                         });
 
@@ -1808,7 +1822,6 @@
                             return;
                         }
 
-                        // Correctly parse the response which might be a plain string or an object
                         const answer = (typeof data.data === 'object' && data.data.data) ? data.data.data : data.data.answer || JSON.stringify(data.data);
                         if (answer) {
                             App.ui.appendMessageToChatLog(answer, 'agent');
@@ -2215,6 +2228,7 @@
                         App.updateState('chatId', '');
                         App.updateState('isAgentSession', false);
                         App.updateState('currentAgent', null);
+                        App.updateState('lastChatCompletionBody', null);
 
                         const responseEl = App.dom.qs.configResponseEl;
                         responseEl.innerHTML = 'Response will appear here...';
@@ -2369,38 +2383,29 @@
                             const textarea = card.querySelector('.request-body-input');
                             if (!textarea) return;
                             try {
-                                // --- FIX START ---
-                                // Prioritize showing the last actual request body sent.
                                 if (App.state.lastChatCompletionBody) {
                                     textarea.value = JSON.stringify(App.state.lastChatCompletionBody, null, 2);
-                                    return; // Exit early as we have the exact data
+                                    return;
                                 }
-                                // --- FIX END ---
                                 const bodyJson = JSON.parse(textarea.value);
                                 bodyJson.chat_id = App.state.chatId || App.utils.getSensibleDefault({ type: 'string' }, 'chat_id');
                                 bodyJson.model = App.state.model;
                                 bodyJson.question = App.state.question;
-                                // --- FIX START ---
-                                // Use the correct set of functions based on whether we are in an agent session or a manual one.
                                 if (App.state.isAgentSession) {
-                                    // For agents, only show functions if we have captured them from an actual request
                                     if (App.state.lastChatCompletionBody?.call) {
                                         bodyJson.call = App.state.lastChatCompletionBody.call;
                                     } else if (App.state.currentSessionTools && App.state.currentSessionTools.length > 0) {
-                                        // Fallback: show current session tools but indicate they're inferred
                                         bodyJson.call = App.state.currentSessionTools;
                                     } else {
                                         delete bodyJson.call;
                                     }
                                 } else {
-                                    // For manual sessions, use the functions selected in Step 4
                                     if (App.state.sessionFunctions.length > 0) {
                                         bodyJson.call = App.state.sessionFunctions.map(f => f.function);
                                     } else {
                                         delete bodyJson.call;
                                     }
                                 }
-                                // --- FIX END ---
 
                                 if (App.state.modelApiKeyOverride.trim()) {
                                     bodyJson.apiKey = App.state.isApiKeyVisible ? App.state.modelApiKeyOverride : '[...masked for security...]';
@@ -2793,7 +2798,6 @@
                             instantiate: document.getElementById('path-instantiate'),
                             create: document.getElementById('path-create')
                         };
-                        // Get references to the timeline items for steps 5 and 6
                         const step5Container = document.getElementById('qs-step-5-modify-session').closest('.timeline-item');
                         const step6Container = document.getElementById('qs-step-6-ask-question').closest('.timeline-item');
 
@@ -2801,8 +2805,6 @@
                         document.querySelector('.session-choice').addEventListener('change', (e) => {
                             const selectedValue = e.target.value;
 
-                            // --- FIX START ---
-                            // Toggle visibility of steps 5 and 6 based on the selected path
                             if (selectedValue === 'instantiate') {
                                 step5Container.style.display = 'none';
                                 step6Container.style.display = 'none';
@@ -2810,7 +2812,6 @@
                                 step5Container.style.display = 'block';
                                 step6Container.style.display = 'block';
                             }
-                            // --- FIX END ---
 
                             if (selectedValue !== 'instantiate' && App.state.isAgentSession) {
                                 this.switchToAgentSelectionView();
@@ -3150,15 +3151,6 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                         sessionStorage.removeItem('oauth_client_id');
                     },
 
-                    // --- START: NEW PARSER INTEGRATION ---
-                    /**
-                     * Transforms markdown text into a structured agent JSON format.
-                     * This robust parser uses a context stack to handle complex nested structures,
-                     * multi-line values, and various markdown patterns.
-                     * @param {string} markdownText - The markdown content of the agent definition.
-                     * @param {object} metadata - Additional metadata like id, title, version.
-                     * @returns {object} The structured JSON object for the agent.
-                     */
                     transformMarkdownToAgentJson(markdownText, metadata) {
                         // Helper: UTF-8-safe base64 encode
                         const encodeB64 = (str) => {
@@ -3419,20 +3411,111 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                             if (inInlineSparql) closeInlineSparql();
                             commitMultiline();
 
-                            // Post-process: move overview name/version to root if present
-                            const top = root[rootKey];
-                            if (top.overview && typeof top.overview === 'object') {
-                                if (top.overview.name) top.name = top.overview.name;
-                                if (top.overview.version) top.version = top.overview.version;
-                                delete top.overview;
+                            // --- START: YOUR CORRECTED POST-PROCESSING LOGIC ---
+                            const agentData = {};
+                            const originalRoot = root[rootKey];
+
+                            // Extract basic info
+                            if (originalRoot.name) agentData.name = originalRoot.name;
+                            if (originalRoot.version) agentData.version = originalRoot.version;
+
+                            // Handle features
+                            if (originalRoot.features || originalRoot.virtuosoSupportAgent?.features) {
+                                const featuresSource = originalRoot.features || originalRoot.virtuosoSupportAgent?.features;
+                                agentData.features = {};
+
+                                Object.keys(featuresSource).forEach(key => {
+                                    if (key !== 'functions') {
+                                        agentData.features[key] = featuresSource[key];
+                                    }
+                                });
                             }
 
-                            // Merge metadata.functions if provided
-                            if (metadata && Array.isArray(metadata.functions) && metadata.functions.length && !top.functions) {
-                                top.functions = { description: 'Functions are invoked in a specific order based on user input or as a fallback.', list: metadata.functions.map(f => f.function || f.name || f) };
+                            // Handle functions - check multiple possible locations
+                            let functionsData = null;
+                            if (originalRoot.functions) {
+                                functionsData = originalRoot.functions;
+                            } else if (originalRoot.features?.functions) {
+                                functionsData = originalRoot.features.functions;
+                            } else if (originalRoot.virtuosoSupportAgent?.features?.functions) {
+                                functionsData = originalRoot.virtuosoSupportAgent.features.functions;
                             }
 
-                            return root;
+                            // YOUR ENHANCEMENT FOR ROBUSTNESS
+                            let markdownFunctions = [];
+                            if (functionsData && functionsData.list && Array.isArray(functionsData.list)) {
+                                const transformedMarkdownFunctions = functionsData.list.map(item => {
+                                    if (typeof item === 'string') {
+                                        const cleanName = item.replace(/`/g, '').trim();
+                                        return { name: cleanName };
+                                    } else if (typeof item === 'object' && !item.name && !item.function) {
+                                        return { name: String(item) };
+                                    }
+                                    return item;
+                                });
+                                markdownFunctions = transformedMarkdownFunctions;
+                            }
+
+                            // Set up functions structure
+                            if (!agentData.features) agentData.features = {};
+                            agentData.features.functions = {};
+
+                            // Add description if available
+                            if (functionsData && functionsData.description) {
+                                agentData.features.functions.description = functionsData.description;
+                            }
+
+                            // Handle metadata functions (these take precedence)
+                            if (metadata && Array.isArray(metadata.functions) && metadata.functions.length) {
+                                // Transform metadata functions to correct format
+                                const transformedFunctions = metadata.functions.map(f => {
+                                    const result = {};
+
+                                    if (f.function) {
+                                        result.name = f.function;  // Transform function -> name
+                                    } else if (f.name) {
+                                        result.name = f.name;
+                                    } else {
+                                        result.name = typeof f === 'string' ? f : String(f);
+                                    }
+
+                                    // Preserve other properties like title
+                                    Object.keys(f).forEach(key => {
+                                        if (key !== 'function' && key !== 'name') {
+                                            result[key] = f[key];
+                                        }
+                                    });
+
+                                    return result;
+                                });
+
+                                agentData.features.functions.list = transformedFunctions;
+                            } else if (markdownFunctions.length > 0) {
+                                // Use markdown functions if no metadata functions
+                                agentData.features.functions.list = markdownFunctions;
+                            } else if (functionsData && functionsData.list) {
+                                // Fallback to any existing list
+                                agentData.features.functions.list = functionsData.list;
+                            }
+
+                            // Copy other top-level sections
+                            ['commands', 'rules', 'preferences', 'formats', 'initialization', 'queryProcessingFeatures', 'predefinedPrompts', 'predefinedQueryTemplates', 'fallbackStrategies'].forEach(section => {
+                                if (originalRoot[section]) {
+                                    agentData[section] = originalRoot[section];
+                                }
+                            });
+
+                            // Handle any remaining sections that might be nested
+                            Object.keys(originalRoot).forEach(key => {
+                                if (!['name', 'version', 'features', 'functions', 'commands', 'rules', 'preferences', 'formats', 'initialization', 'queryProcessingFeatures', 'predefinedPrompts', 'predefinedQueryTemplates', 'fallbackStrategies', 'virtuosoSupportAgent'].includes(key)) {
+                                    agentData[key] = originalRoot[key];
+                                }
+                            });
+
+                            // Return clean structure with agent as root
+                            return { agent: agentData };
+                            // --- END OF YOUR CORRECTED POST-PROCESSING LOGIC ---
+
                         } catch (err) {
                             console.error('transformMarkdownToAgentJson error:', err);
                             throw err;
