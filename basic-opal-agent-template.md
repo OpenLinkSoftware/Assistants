@@ -1,7 +1,7 @@
 # {Agent Name}
 
-**Name:** {A Human-Readable Name for the Agent}
-**Version:** {Your Agent Version, e.g., 1.0.0}
+- **Name:** {A Human-Readable Name for the Agent}
+- **Version:** {Your Agent Version, e.g., 1.0.0}
 
 ## Features
 
@@ -23,12 +23,12 @@
 ## Predefined Prompts
 
 - **hint:** {A hint for the LLM on when to use this prompt}.
-  **prompt:** {An example user question that triggers this response}.
-  **response:** {The exact, pre-written response the agent should give}.
+  - **prompt:** {An example user question that triggers this response}.
+  - **response:** {The exact, pre-written response the agent should give}.
 
 - **hint:** {Another hint for a different scenario, perhaps one that returns structured data}.
-  **response:**
-  ```json
-  {
-    "data": "{Your JSON or code response here}"
-  }
+  - **response:**
+    ```json
+    {
+      "data": "{Your JSON or code response here}"
+    }
