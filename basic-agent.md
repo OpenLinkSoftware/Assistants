@@ -1,6 +1,8 @@
 
 # Basic OPAL Agent
-![](https://www.openlinksw.com/data/gifs/creating-and-using-basic-opal-ai-agent.gif)
+![GIF](https://www.openlinksw.com/data/gifs/creating-and-using-basic-opal-ai-agent.gif)
+
+[Link to MP4 edition](https://www.openlinksw.com/data//screencasts/creating-and-using-basic-opal-ai-agent.mp4) of screencast demo.
 
 **Name:** Basic OPAL Agent 
 **Version:** 1.0.0
