@@ -2,6 +2,8 @@
 # Basic OPAL Agent
 ![](https://www.openlinksw.com/data/gifs/creating-and-using-basic-opal-ai-agent.gif)
 
+[MP4 Alternative](https://www.openlinksw.com/data/screencasts/creating-and-using-basic-opal-ai-agent.mp4)
+
 **Name:** Basic OPAL Agent 
 **Version:** 1.0.0
 ## Features
