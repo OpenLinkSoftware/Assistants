@@ -1129,7 +1129,7 @@
                             <div class="input-group">
                                 <label for="qs-agent-id">Agent ID</label>
                                 <input type="text" id="qs-agent-id">
-                                <p>A short, unique name. The prefix `system-` will be added automatically.
+                                <p>A short, unique name. The prefix "<code>system-</code>" will be added automatically.
                                 </p>
                             </div>
                             <div class="input-group">
@@ -1156,7 +1156,7 @@
                                     <textarea id="qs-agent-prompt"
                                         placeholder="You are a helpful assistant that specializes in..."></textarea>
                                     <div class="drop-zone-prompt">
-                                        <p>Drag & drop a .md file here, or</p>
+                                        <p>Drag & drop a Markdown (<code>.md</code>) file here, or</p>
                                         <label for="markdown-file-input" class="btn btn-secondary">Click to
                                             Upload</label>
                                         <input type="file" id="markdown-file-input" accept=".md,.txt,text/markdown">
@@ -1213,8 +1213,8 @@
                 <div class="timeline-item right">
                     <div class="timeline-content" id="qs-step-6-ask-question">
                         <h3>Step 6: Ask a Question</h3>
-                        <p>With our session configured, we can interact with it. Your `Session ID` and any selected
-                            functions are automatically included in the request.</p>
+                        <p>With our session configured, we can interact with it. Your <i>Session ID</i> and any selected
+                            functions will be automatically included in the request.</p>
                         <div class="input-group">
                             <label for="qs-question">Your Question</label>
                             <input type="text" id="qs-question" class="global-state-input" data-state-key="question">
@@ -1303,9 +1303,9 @@
                     oauthEndpoints: null,
                     isAgentSession: false,
                     currentAgent: null,
-                    availableFunctions: [],  // Handles functions fetched from the API
-                    availableAgents: [],     // Handles agents fetched from the API
-                    currentSessionTools: [], // Handles tools bound to the current session
+                    availableFunctions: [],       // Handles functions fetched from the API
+                    availableAgents: [],          // Handles agents fetched from the API
+                    currentSessionTools: [],      // Handles tools bound to the current session
                     lastChatCompletionBody: null, // Handles last chat completion request body
                 },
 
@@ -3121,7 +3121,7 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                 return await processResponse(response);
                             } else {
                                 if (response.status === 404) {
-                                    throw new Error(`Server returned 404 (Not Found). Please check if the Endpoint URL is correct and if it supports OpenID discovery.`);
+                                    throw new Error(`Server returned 404 (Not Found). Please check whether the Endpoint URL is correct and whether it supports OpenID discovery.`);
                                 } else if (response.status >= 500) {
                                     throw new Error(`The server experienced an internal error (Status: ${response.status}). Please try again later.`);
                                 } else {
@@ -3214,7 +3214,7 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                 return t;
                             };
 
-                            // Root key: prefer metadata.id, else H1 title fallback
+                            // Root key: prefer metadata.id, else fallback to H1 title
                             const h1 = (text.match(/^\s*#\s*(.+)$/m) || [, null])[1];
                             const rootKey = (metadata && metadata.id) ? String(metadata.id) : (h1 ? toCamel(h1) : 'agent');
                             const root = { [rootKey]: Object.assign({}, metadata || {}) };
