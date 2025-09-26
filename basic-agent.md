@@ -1,8 +1,9 @@
+
 # Basic OPAL Agent
+![](https://www.openlinksw.com/data/gifs/creating-and-using-basic-opal-ai-agent.gif)
 
 **Name:** Basic OPAL Agent 
 **Version:** 1.0.0
-
 ## Features
 
 - **Multi-Query Execution:** Capable of executing SQL, SPARQL, SPASQL, and GraphQL queries.
