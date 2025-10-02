@@ -14,7 +14,7 @@
       "@type": "TechArticle",
       "headline": "OpenLink AI Layer (OPAL) Functions (Tools) Playground",
       "description": "An immersive, interactive playground to accelerate developer onboarding. Go from zero to a fully authenticated API call interactions in seconds.",
-      "datePublished": "2025-09-24",
+      "datePublished": "2025-01-01",
       "author": {
         "@type": "Organization",
         "name": "OpenLink Software",
@@ -155,6 +155,20 @@
             opacity: 0.9;
         }
 
+        .btn-remove-model {
+            padding: 0.5rem 1rem;
+            background-color: var(--color-error);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-remove-model:hover {
+            opacity: 0.9;
+        }
+
         /* --- Inputs & Forms --- */
         .input-group {
             margin-bottom: 1rem;
@@ -225,6 +239,85 @@
             min-height: 150px;
             font-family: var(--font-family-mono);
             resize: vertical;
+        }
+
+        /* --- LLM Management Styles --- */
+        .llm-list {
+            background-color: var(--color-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .llm-list h5 {
+            margin-bottom: 1rem;
+            color: var(--color-text);
+        }
+
+        .llm-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .llm-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .llm-item-info {
+            flex-grow: 1;
+        }
+
+        .llm-item-name {
+            font-weight: 600;
+            color: var(--color-text);
+            font-family: var(--font-family-mono);
+        }
+
+        .llm-item-provider {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .llm-form {
+            background-color: var(--color-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 1.5rem;
+        }
+
+        .llm-form h5 {
+            margin-bottom: 1rem;
+            color: var(--color-text);
+        }
+
+        .llm-form-row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .llm-form-row .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .llm-form-row .btn {
+            flex-shrink: 0;
+        }
+
+        .llm-empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--color-text-muted);
+            font-style: italic;
         }
 
         /* --- Section 1: Hero --- */
@@ -332,7 +425,7 @@
             position: relative;
         }
 
-        .btn-toggle-token {
+        .btn-copy-content {
             position: absolute;
             top: 0.5rem;
             right: 0.5rem;
@@ -346,7 +439,7 @@
             z-index: 10;
         }
 
-        .btn-toggle-token:hover {
+        .btn-copy-content:hover {
             background-color: #333;
             color: var(--color-text);
         }
@@ -384,10 +477,21 @@
         }
 
         .chat-log .message {
+            position: relative;
             margin-bottom: 1rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--color-border);
         }
+
+        .chat-log .message .btn-copy-content {
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .chat-log .message:hover .btn-copy-content {
+            opacity: 1;
+        }
+
 
         .chat-log .message:last-child {
             border-bottom: none;
@@ -402,6 +506,10 @@
 
         .chat-log .message-sender.user {
             color: var(--color-success);
+        }
+
+        .chat-log .message-content {
+            padding-right: 4rem;
         }
 
         .chat-log .message-content p {
@@ -567,7 +675,7 @@
             margin-bottom: 2rem;
             border: 1px solid var(--color-border);
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
         }
 
@@ -1032,6 +1140,11 @@
                         <div class="session-choice"
                             style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
                             <div style="display: flex; align-items: center;">
+                                <input type="radio" id="choice-llms" name="session-type" value="llms"
+                                    style="margin-right: 0.5rem;">
+                                <label for="choice-llms">Manage LLMs</label>
+                            </div>
+                            <div style="display: flex; align-items: center;">
                                 <input type="radio" id="choice-functions" name="session-type" value="functions" checked
                                     style="margin-right: 0.5rem;">
                                 <label for="choice-functions">Bind Functions</label>
@@ -1074,23 +1187,12 @@
                                         <option>Run Step 3 to populate models...</option>
                                     </select>
                                 </div>
-                                <!-- FIX START: Add Session Title input -->
                                 <div class="input-group">
                                     <label for="qs-agent-title-input">Session Title (Optional)</label>
                                     <input type="text" id="qs-agent-title-input"
                                         placeholder="e.g., My Virtuoso Support Chat">
                                 </div>
-                                <!-- FIX END -->
                                 <button id="qs-run-instantiate-agent" class="btn btn-primary">Instantiate Agent</button>
-                                <div class="input-group">
-                                    <label for="qs-alt-question">Initial Question (Optional)</label>
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <input type="text" id="qs-alt-question" placeholder="e.g., What are you?"
-                                            style="flex: 1;">
-                                        <button id="qs-send-initial-question" class="btn btn-secondary"
-                                            style="flex-shrink: 0;">Send</button>
-                                    </div>
-                                </div>
                             </div>
 
                             <div id="agent-interaction-block" style="display: none;">
@@ -1152,15 +1254,19 @@
                             </div>
                             <div class="input-group">
                                 <label for="qs-agent-prompt">System Prompt (Configuration in Markdown)</label>
-                                <div id="markdown-drop-zone" class="drop-zone">
-                                    <textarea id="qs-agent-prompt"
-                                        placeholder="You are a helpful assistant that specializes in..."></textarea>
-                                    <div class="drop-zone-prompt">
-                                        <p>Drag & drop a .md file here, or</p>
-                                        <label for="markdown-file-input" class="btn btn-secondary">Click to
-                                            Upload</label>
-                                        <input type="file" id="markdown-file-input" accept=".md,.txt,text/markdown">
+                                <div class="response-viewer-wrapper">
+                                    <div id="markdown-drop-zone" class="drop-zone">
+                                        <textarea id="qs-agent-prompt"
+                                            placeholder="You are a helpful assistant that specializes in..."></textarea>
+                                        <div class="drop-zone-prompt">
+                                            <p>Drag & drop a .md file here, or</p>
+                                            <label for="markdown-file-input" class="btn btn-secondary">Click to
+                                                Upload</label>
+                                            <input type="file" id="markdown-file-input" accept=".md,.txt,text/markdown">
+                                        </div>
                                     </div>
+                                    <button class="btn-copy-content" data-target-id="qs-agent-prompt"
+                                        title="Copy Prompt">Copy</button>
                                 </div>
                             </div>
                             <div id="qs-agent-function-selector-container">
@@ -1169,7 +1275,26 @@
                             </div>
                             <button id="qs-run-save-agent" class="btn btn-primary">Save Agent Configuration</button>
                         </div>
-                        <div id="qs-config-response" class="response-viewer">Response will appear here...</div>
+
+                        <!-- Path 4: LLM Management -->
+                        <div id="path-llms" style="display:none;">
+                            <div class="input-group">
+                                <label for="llm-provider-select">Select LLM Provider</label>
+                                <select id="llm-provider-select">
+                                    <option value="">Loading providers...</option>
+                                </select>
+                            </div>
+                            <div id="llm-provider-view">
+                                <p
+                                    style="color: var(--color-text-muted); font-style: italic; text-align: center; padding: 2rem;">
+                                    Select a provider to manage LLMs
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="response-viewer-wrapper">
+                            <div id="qs-config-response" class="response-viewer">Response will appear here...</div>
+                        </div>
                     </div>
                 </div>
                 <!-- Step 5 -->
@@ -1199,6 +1324,11 @@
                                 class="global-state-input" data-state-key="temperature">
                         </div>
                         <div class="input-group">
+                            <label for="qs-update-api-timeout">API Timeout (seconds)</label>
+                            <input type="number" id="qs-update-api-timeout" min="1" step="1" class="global-state-input"
+                                data-state-key="apiTimeoutSeconds">
+                        </div>
+                        <div class="input-group">
                             <label for="qs-update-model-key">Model API Key (Optional Override)</label>
                             <input type="password" id="qs-update-model-key" class="global-state-input"
                                 data-state-key="modelApiKeyOverride" placeholder="Leave blank to use system default">
@@ -1220,7 +1350,12 @@
                             <input type="text" id="qs-question" class="global-state-input" data-state-key="question">
                         </div>
                         <button id="qs-run-chat-completion" class="btn btn-primary">Send Question</button>
-                        <pre id="qs-chat-completion-response" class="response-viewer">Response will appear here...</pre>
+                        <div class="response-viewer-wrapper">
+                            <pre id="qs-chat-completion-response"
+                                class="response-viewer">Response will appear here...</pre>
+                            <button class="btn-copy-content" data-target-id="qs-chat-completion-response"
+                                title="Copy Response">Copy</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1247,6 +1382,11 @@
                 <div class="input-group">
                     <label for="explorer-chat-id">Active Chat ID</label>
                     <input type="text" id="explorer-chat-id" class="global-state-input" data-state-key="chatId">
+                </div>
+                <div class="input-group">
+                    <label for="explorer-api-timeout">API Timeout (seconds)</label>
+                    <input type="number" id="explorer-api-timeout" min="1" step="1" class="global-state-input"
+                        data-state-key="apiTimeoutSeconds">
                 </div>
             </div>
             <div class="api-explorer-layout">
@@ -1294,6 +1434,7 @@
                     question: "Execute `select now()`",
                     top_p: 0.5,
                     temperature: 0.5,
+                    apiTimeoutSeconds: 30,
                     sessionFunctions: [],
                     modelApiKeyOverride: '',
                     authMethod: 'bearer',
@@ -1303,10 +1444,80 @@
                     oauthEndpoints: null,
                     isAgentSession: false,
                     currentAgent: null,
-                    availableFunctions: [],  // Handles functions fetched from the API
-                    availableAgents: [],     // Handles agents fetched from the API
-                    currentSessionTools: [], // Handles tools bound to the current session
-                    lastChatCompletionBody: null, // Handles last chat completion request body
+                    availableFunctions: [],
+                    availableAgents: [],
+                    currentSessionTools: [],
+                    lastChatCompletionBody: null,
+                    llmProviders: {},
+                    currentAbortController: null,
+                    currentAbortTimeout: null,
+                    defaultAgentTemplate: `# Description
+
+**Name:** my-new-agent
+**Name:** Basic OPAL Agent
+**Version:** 1.0.0
+**Created:** 2025-09-30
+
+## Features
+
+- **Multi-Query Execution:** Capable of executing SQL, SPARQL, SPASQL, and GraphQL queries.
+- **Ontology-Aware SPARQL:** Uses shared ontologies to inform the construction of SPARQL queries for enhanced accuracy.
+- **Data Source Exploration:** Can explore target data sources to identify entity types and their prevalence.
+
+### Functions
+
+- **Description:** A universal tool for executing database and graph queries.
+- **List:**
+  - **name:** \`Query.execute\`
+  - **signature:** \`(query_language, query_string, endpoint_url)\`
+
+### Fine-tuning
+
+#### Query Processing Features
+
+##### Predefined Prompts
+
+- **hint:** Use this when the user asks to explore, discover, or get a summary of the types of data in a SPARQL endpoint.
+  **prompt:** Explore the data source and show me the types of entities it contains.
+  **response:**
+  \`\`\`sparql
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+    SELECT ?type (COUNT(?entity) AS ?count) (SAMPLE(?entity) AS ?sampleEntity)
+    WHERE {
+    ?entity rdf:type ?type .
+    }
+    GROUP BY ?type
+    ORDER BY DESC(?count)
+  \`\`\`
+
+## Commands
+
+- **Prefix:** \`/\`
+- **Available Commands:**
+  - \`/help\`: Provides help for common issues or using the bot.
+  - \`/query\`: Assists with formulating SPARQL-within-SQL queries.
+  - \`/config\`: Guides users through driver configuration.
+  - \`/troubleshoot\`: Helps troubleshoot connection or driver issues.
+  - \`/limit\`: Sets the SPARQL query result set limit. Default value: 10.
+
+## Rules
+
+- Prioritize accuracy and directness in query results.
+- When asked to explore a SPARQL endpoint, use the predefined exploration query.
+- Inform the user if a query language is not supported or if a query fails to execute.
+
+
+## Preferences
+
+- **Interaction Style:** Friendly and professional
+- **Knowledge Depth:** Deep and comprehensive
+- **Response Speed:** Fast but accurate
+
+## Initialization
+
+Upon activation, the agent greets the user and awaits further instructions. If preferences are invalid or empty, the agent will guide users through a configuration process and adjust responses accordingly.
+`
                 },
 
                 // --- INITIALIZATION ---
@@ -1364,6 +1575,7 @@
                             agentChatInput: document.getElementById('qs-agent-chat-input'),
                             agentChatSendBtn: document.getElementById('qs-agent-chat-send-btn'),
                             newAgentSessionBtn: document.getElementById('qs-new-agent-session'),
+                            questionInput: document.getElementById('qs-question'),
                         },
                         apiExplorer: {
                             sidebar: document.getElementById('sidebar-links'),
@@ -1381,11 +1593,6 @@
                         }
                     });
 
-                    // This button now also triggers instantiation
-                    document.getElementById('qs-send-initial-question').addEventListener('click', (e) => {
-                        this.handlers.handleInstantiateAgent(document.getElementById('qs-run-instantiate-agent'));
-                    });
-
                     this.dom.qs.loadSpecBtn.addEventListener('click', () => this.handlers.handleLoadOpenApiSpec());
                     this.dom.qs.addUrlBtn.addEventListener('click', () => this.handlers.handleOpenApiUrlInteraction({ type: 'add' }));
                     this.dom.qs.openapiUrlsContainer.addEventListener('click', (e) => this.handlers.handleOpenApiUrlInteraction(e));
@@ -1401,17 +1608,23 @@
                     this.dom.qs.oauthLoginBtn.addEventListener('click', (e) => this.handlers.handleOAuthLogin(e.target));
                     this.dom.qs.oauthLogoutBtn.addEventListener('click', () => this.handlers.resetAuthenticationState());
 
-                    // Agent Interaction Listeners
-                    this.dom.qs.agentChatSendBtn.addEventListener('click', () => this.handlers.handleAgentChatCompletion());
+                    this.dom.qs.agentChatSendBtn.addEventListener('click', (e) => this.handlers.handleAgentChatCompletion(e.target));
                     this.dom.qs.agentChatInput.addEventListener('keypress', (e) => {
                         if (e.key === 'Enter') {
                             e.preventDefault();
-                            this.handlers.handleAgentChatCompletion();
+                            this.handlers.handleAgentChatCompletion(this.dom.qs.agentChatSendBtn);
                         }
                     });
                     this.dom.qs.newAgentSessionBtn.addEventListener('click', () => {
                         if (confirm('This will end the current session and start a new one. Continue?')) {
                             this.ui.switchToAgentSelectionView();
+                        }
+                    });
+
+                    this.dom.qs.questionInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            this.dom.qs.runChatCompletionBtn.click();
                         }
                     });
 
@@ -1421,6 +1634,26 @@
                     this.ui.initializeFunctionBindingListener();
                     this.dom.apiExplorer.content.addEventListener('click', (e) => this.handlers.handleApiExplorerInteraction(e));
                     document.body.addEventListener('click', (e) => this.handlers.handleTokenToggle(e));
+                    document.body.addEventListener('click', (e) => this.handlers.handleCopyContent(e));
+
+                    // LLM Management event listeners
+                    const llmPath = document.getElementById('path-llms');
+                    if (llmPath) {
+                        llmPath.addEventListener('click', (e) => {
+                            if (e.target.id === 'llm-add-btn') {
+                                this.handlers.handleAddModel(e.target);
+                            } else if (e.target.classList.contains('btn-remove-model')) {
+                                this.handlers.handleRemoveModel(e.target);
+                            }
+                        });
+
+                        const providerSelect = document.getElementById('llm-provider-select');
+                        if (providerSelect) {
+                            providerSelect.addEventListener('change', (e) => {
+                                this.ui.renderLlmProviderView(e.target.value);
+                            });
+                        }
+                    }
                 },
 
                 updateState(key, value, sourceElement = null, preserveOpenApiUrls = false) {
@@ -1477,7 +1710,7 @@
 
                 generateDefaultOpenApiUrls() {
                     try {
-                        const baseUrl = this.state.endpointUrl.replace(/\/+$/, ''); // Remove trailing slashes
+                        const baseUrl = this.state.endpointUrl.replace(/\/+$/, '');
                         return [
                             `${baseUrl}/openapi.yaml`,
                             `${baseUrl.replace('/api', '')}/functions/openapi.yaml`
@@ -1490,13 +1723,7 @@
                     }
                 },
 
-                // --- FIX START: Enhanced makeApiCall to detect application-level errors ---
-                async makeApiCall({ url, method, body = null, isAuthenticated = false, responseElement, triggerButton = null }) {
-                    const originalButtonText = triggerButton ? triggerButton.textContent : '';
-                    if (triggerButton) {
-                        triggerButton.disabled = true;
-                        triggerButton.textContent = 'Loading...';
-                    }
+                async makeApiCall({ url, method, body = null, isAuthenticated = false, responseElement, signal = null }) {
                     if (responseElement) {
                         this.ui.showLoading(responseElement);
                     }
@@ -1506,10 +1733,6 @@
                         if (!this.state.apiKey) {
                             const error = new Error('API Key is required. Please provide it in Step 2.');
                             if (responseElement) this.ui.showError(responseElement, error);
-                            if (triggerButton) {
-                                triggerButton.disabled = false;
-                                triggerButton.textContent = originalButtonText;
-                            }
                             return { data: null, error };
                         }
                         headers['Authorization'] = `Bearer ${this.state.apiKey}`;
@@ -1519,7 +1742,8 @@
                         const response = await fetch(url, {
                             method,
                             headers,
-                            body: body ? JSON.stringify(body) : null
+                            body: body ? JSON.stringify(body) : null,
+                            signal
                         });
 
                         if (response.status === 204 || response.status === 201) {
@@ -1534,14 +1758,12 @@
                         try {
                             responseData = JSON.parse(responseText);
                         } catch (e) {
-                            // If parsing fails, it might be a non-JSON error message from the server
                             if (!response.ok) {
                                 throw new Error(`HTTP ${response.status} ${response.statusText}: ${responseText}`);
                             }
-                            responseData = responseText; // Treat as plain text success
+                            responseData = responseText;
                         }
 
-                        // Check for application-level errors even in a 200 OK response
                         if (responseData && responseData.error) {
                             throw new Error(responseData.error);
                         }
@@ -1555,16 +1777,16 @@
                         return { data: resultData, error: null };
 
                     } catch (error) {
+                        if (error.name === 'AbortError') {
+                            const message = `Operation was cancelled or timed out after ${App.state.apiTimeoutSeconds} seconds.`;
+                            if (responseElement) this.ui.showError(responseElement, new Error(message));
+                            console.warn(message);
+                            return { data: null, error: new Error(message) };
+                        }
                         if (responseElement) this.ui.showError(responseElement, error);
                         return { data: null, error };
-                    } finally {
-                        if (triggerButton) {
-                            triggerButton.disabled = false;
-                            triggerButton.textContent = originalButtonText;
-                        }
                     }
                 },
-                // --- FIX END ---
 
                 handlers: {
                     handleOpenApiUrlInteraction(event) {
@@ -1628,6 +1850,7 @@
 
                             statusMsg.textContent = `✅ Spec(s) loaded! Endpoint updated.`;
                             statusMsg.style.color = 'var(--color-success)';
+                            App.ui.scrollToStep('qs-step-2-authenticate');
 
                         } catch (error) {
                             console.error('Failed to load OpenAPI spec(s):', error);
@@ -1642,8 +1865,7 @@
                             url: `${App.state.endpointUrl}/createTopic`,
                             method: 'POST',
                             isAuthenticated: true,
-                            responseElement: App.dom.qs.authResponseEl,
-                            triggerButton: button
+                            responseElement: App.dom.qs.authResponseEl
                         });
 
                         if (data?.data?.chat_id) {
@@ -1693,12 +1915,163 @@
 
                             responseEl.textContent = `Successfully loaded ${functions.length} function(s) and ${agents.length} agent(s).`;
                             responseEl.className = 'response-viewer success';
+                            App.ui.scrollToStep('qs-step-4-interact');
                         } catch (error) {
                             responseEl.textContent = `Error: ${error.message}`;
                             responseEl.className = 'response-viewer error';
                         } finally {
                             button.disabled = false;
                             button.textContent = 'List Functions & Agents';
+                        }
+                    },
+
+                    async handleListModels() {
+                        const providerSelect = document.getElementById('llm-provider-select');
+                        const llmProviderView = document.getElementById('llm-provider-view');
+
+                        providerSelect.innerHTML = '<option value="">Loading providers...</option>';
+                        llmProviderView.innerHTML = '<p style="color: var(--color-text-muted); font-style: italic; text-align: center; padding: 2rem;">Loading models...</p>';
+
+                        try {
+                            const { data, error } = await App.makeApiCall({
+                                url: `${App.state.endpointUrl}/getModels`,
+                                method: 'GET',
+                                isAuthenticated: true,
+                                responseElement: null
+                            });
+
+                            if (error) throw error;
+
+                            const models = Array.isArray(data.data) ? data.data : [];
+
+                            if (models.length === 0) {
+                                providerSelect.innerHTML = '<option value="">No models found</option>';
+                                llmProviderView.innerHTML = '<div class="llm-empty-state">No LLMs are currently configured. Add one below to get started.</div>';
+                                return;
+                            }
+
+                            // Group models by provider
+                            App.state.llmProviders = {};
+                            const providers = new Set();
+
+                            models.forEach(model => {
+                                const provider = model.provider || 'unknown';
+                                providers.add(provider);
+
+                                if (!App.state.llmProviders[provider]) {
+                                    App.state.llmProviders[provider] = [];
+                                }
+                                App.state.llmProviders[provider].push(model);
+                            });
+
+                            // Populate provider dropdown
+                            App.ui.populateLlmProviderDropdown(Array.from(providers));
+
+                            // Render the first provider's view
+                            const firstProvider = Array.from(providers)[0];
+                            if (firstProvider) {
+                                providerSelect.value = firstProvider;
+                                App.ui.renderLlmProviderView(firstProvider);
+                            }
+
+                        } catch (error) {
+                            console.error('Failed to load models:', error);
+                            providerSelect.innerHTML = '<option value="">Error loading providers</option>';
+                            llmProviderView.innerHTML = `<div class="llm-empty-state" style="color: var(--color-error);">Error loading models: ${error.message}</div>`;
+                        }
+                    },
+
+                    async handleAddModel(button) {
+                        const modelIdInput = document.getElementById('llm-model-id-input');
+                        const providerSelect = document.getElementById('llm-provider-select-add');
+                        const customProviderInput = document.getElementById('llm-custom-provider-input');
+
+                        if (!modelIdInput || !providerSelect) {
+                            console.error('Model form inputs not found');
+                            return;
+                        }
+
+                        const modelId = modelIdInput.value.trim();
+                        let provider = providerSelect.value;
+
+                        if (provider === '__custom__') {
+                            provider = customProviderInput?.value.trim();
+                            if (!provider) {
+                                alert('Please enter a custom provider name.');
+                                return;
+                            }
+                        }
+
+                        if (!modelId || !provider) {
+                            alert('Both Model ID and Provider are required.');
+                            return;
+                        }
+
+                        const originalButtonText = button.textContent;
+                        button.disabled = true;
+                        button.textContent = 'Adding...';
+
+                        try {
+                            const formData = new URLSearchParams();
+                            formData.append('modelId', modelId);
+                            formData.append('provider', provider);
+
+                            const response = await fetch(`${App.state.endpointUrl}/chatModels`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${App.state.apiKey}`,
+                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                },
+                                body: formData.toString()
+                            });
+
+                            if (!response.ok) {
+                                const errorText = await response.text();
+                                throw new Error(`HTTP ${response.status}: ${errorText}`);
+                            }
+
+                            modelIdInput.value = '';
+                            if (customProviderInput) customProviderInput.value = '';
+                            providerSelect.value = providerSelect.querySelector('option:not([value="__custom__"])')?.value || '';
+                            document.getElementById('custom-provider-input').style.display = 'none';
+
+                            await this.handleListModels();
+
+                            const llmProviderView = document.getElementById('llm-provider-view');
+                            const successMsg = document.createElement('div');
+                            successMsg.style.cssText = 'background: var(--color-success); color: white; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;';
+                            successMsg.textContent = `✓ Model "${modelId}" added successfully to ${provider}!`;
+                            llmProviderView.insertBefore(successMsg, llmProviderView.firstChild);
+                            setTimeout(() => successMsg.remove(), 3000);
+
+                        } catch (error) {
+                            alert(`Failed to add model: ${error.message}`);
+                        } finally {
+                            button.disabled = false;
+                            button.textContent = originalButtonText;
+                        }
+                    },
+
+                    async handleRemoveModel(button) {
+                        const modelId = button.dataset.modelId;
+                        if (!modelId) return;
+                        if (!confirm(`Are you sure you want to remove the model "${modelId}"?`)) return;
+
+                        const originalButtonText = button.textContent;
+                        button.disabled = true;
+                        button.textContent = 'Removing...';
+
+                        try {
+                            const response = await fetch(`${App.state.endpointUrl}/chatModels?modelId=${encodeURIComponent(modelId)}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': `Bearer ${App.state.apiKey}` }
+                            });
+                            if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                            await this.handleListModels();
+                        } catch (error) {
+                            alert(`Failed to remove model: ${error.message}`);
+                            button.disabled = false;
+                            button.textContent = originalButtonText;
                         }
                     },
 
@@ -1712,21 +2085,26 @@
                             model: App.state.model,
                             call: App.state.sessionFunctions.map(f => f.function)
                         };
-                        await App.makeApiCall({
+                        const { data } = await App.makeApiCall({
                             url: `${App.state.endpointUrl}/chatTopic?chat_id=${App.state.chatId}`,
                             method: 'POST',
                             isAuthenticated: true,
                             body,
-                            responseElement: App.dom.qs.configResponseEl,
-                            triggerButton: button
+                            responseElement: App.dom.qs.configResponseEl
                         });
+                        if (data) {
+                            App.ui.scrollToStep('qs-step-5-modify-session');
+                        }
                     },
 
-                    // --- FIX START: Add logic to handle optional session title ---
                     async handleInstantiateAgent(button) {
+                        if (App.state.currentAbortController) {
+                            App.state.currentAbortController.abort();
+                            return;
+                        }
+
                         const agentSelect = document.getElementById('qs-agent-select');
                         const agentConfigId = agentSelect.value;
-                        const altQuestion = document.getElementById('qs-alt-question').value;
                         const responseEl = App.dom.qs.configResponseEl;
                         const newTitle = document.getElementById('qs-agent-title-input').value.trim();
 
@@ -1735,20 +2113,21 @@
                             return;
                         }
 
-                        const originalButtonText = button.textContent;
-                        button.disabled = true;
-                        button.textContent = 'Instantiating...';
-                        App.ui.showLoading(responseEl);
+                        const originalState = { text: button.textContent, color: button.style.backgroundColor };
+                        const controller = new AbortController();
+                        App.state.currentAbortController = controller;
+                        let animationIntervalId = null;
 
                         try {
-                            // STAGE 1: Instantiate the agent to get a new session ID.
+                            animationIntervalId = App.ui.startCancellableOperation(button, 'Instantiating');
+                            App.ui.showLoading(responseEl);
+
+                            const timeoutId = setTimeout(() => controller.abort(), App.state.apiTimeoutSeconds * 1000);
+                            App.state.currentAbortTimeout = timeoutId;
+
                             const selectedOption = agentSelect.selectedOptions[0];
                             const agentTitle = selectedOption.textContent;
                             const instantiationBody = { model: App.state.model, chat_id: agentConfigId };
-                            if (altQuestion.trim()) {
-                                instantiationBody.alt_question = altQuestion;
-                            }
-                            // Do NOT send title here. It's handled in the next step.
 
                             const { data: instantiationResponse, error: instantiationError } = await App.makeApiCall({
                                 url: `${App.state.endpointUrl}/chatCompletion`,
@@ -1756,119 +2135,129 @@
                                 isAuthenticated: true,
                                 body: instantiationBody,
                                 responseElement: null,
+                                signal: controller.signal
                             });
-
                             if (instantiationError) throw instantiationError;
 
                             const newChatId = instantiationResponse?.data?.chat_id;
                             if (!newChatId) throw new Error('Failed to get a new session ID from the server.');
 
-                            // STAGE 2 (NEW): Update the title if one was provided.
                             if (newTitle) {
-                                button.textContent = 'Setting Title...';
                                 const { error: titleError } = await App.makeApiCall({
                                     url: `${App.state.endpointUrl}/chatTopic?chat_id=${newChatId}`,
                                     method: 'POST',
                                     isAuthenticated: true,
                                     body: { title: newTitle },
-                                    responseElement: null, // Don't display this intermediate response
+                                    responseElement: null,
+                                    signal: controller.signal
                                 });
                                 if (titleError) {
-                                    // Warn but don't fail the whole process
                                     console.warn(`Could not set custom title: ${titleError.message}`);
+                                    if (titleError.name === 'AbortError') throw titleError;
                                 }
                             }
 
-                            // STAGE 3: Use the new session ID to fetch its state from the correct /getTopic endpoint.
-                            button.textContent = 'Syncing Tools...';
                             const { data: topicResponse, error: topicError } = await App.makeApiCall({
                                 url: `${App.state.endpointUrl}/getTopic?chat_id=${newChatId}`,
                                 method: 'GET',
                                 isAuthenticated: true,
                                 responseElement: null,
+                                signal: controller.signal
                             });
-
                             if (topicError) throw new Error(`Failed to sync session state: ${topicError.message}`);
 
-                            // STAGE 4: Extract data and update client state.
                             const sessionState = topicResponse?.data;
-                            const agentSpecificTools = sessionState?.funcs || [];
-
                             App.updateState('chatId', newChatId);
                             App.updateState('isAgentSession', true);
                             App.updateState('currentAgent', { title: agentTitle, chatId: newChatId, configId: agentConfigId });
-                            App.state.currentSessionTools = agentSpecificTools;
+                            App.state.currentSessionTools = sessionState?.funcs || [];
+                            if (sessionState?.title) App.updateState('title', sessionState.title);
 
-                            // Update global title state with the final title from the server
-                            if (sessionState?.title) {
-                                App.updateState('title', sessionState.title);
-                            }
-
-                            // STAGE 5: Proceed to chat view.
                             App.dom.qs.chatIdValue.textContent = newChatId;
                             App.dom.qs.chatIdDisplay.style.display = 'block';
                             App.ui.switchToAgentChatView(agentTitle, instantiationResponse.data.answer);
+                            App.ui.showSuccess(responseEl, { data: instantiationResponse.data });
 
                         } catch (err) {
-                            App.ui.showError(responseEl, err);
+                            if (err.name !== 'AbortError') App.ui.showError(responseEl, err);
                         } finally {
-                            button.disabled = false;
-                            button.textContent = originalButtonText;
+                            clearTimeout(App.state.currentAbortTimeout);
+                            App.ui.endCancellableOperation(button, animationIntervalId, originalState);
+                            App.state.currentAbortController = null;
+                            App.state.currentAbortTimeout = null;
                         }
                     },
-                    // --- FIX END ---
 
-                    async handleAgentChatCompletion() {
+                    async handleAgentChatCompletion(button) {
+                        if (App.state.currentAbortController) {
+                            App.state.currentAbortController.abort();
+                            return;
+                        }
+
                         const inputEl = App.dom.qs.agentChatInput;
                         const question = inputEl.value.trim();
                         if (!question) return;
-                        App.updateState('question', question);
 
+                        App.updateState('question', question);
                         App.ui.appendMessageToChatLog(question, 'user');
                         inputEl.value = '';
                         inputEl.focus();
 
-                        const body = {
-                            question: question,
-                            chat_id: App.state.chatId,
-                            model: App.state.model,
-                            call: App.state.currentSessionTools
-                        };
-                        const modelKeyOverride = document.getElementById('qs-agent-model-key').value;
-                        if (modelKeyOverride.trim()) {
-                            body.apiKey = modelKeyOverride;
-                        }
-                        App.updateState('lastChatCompletionBody', body);
+                        const originalState = { text: button.textContent, color: button.style.backgroundColor };
+                        const controller = new AbortController();
+                        App.state.currentAbortController = controller;
+                        let animationIntervalId = null;
 
-                        const { data, error } = await App.makeApiCall({
-                            url: `${App.state.endpointUrl}/chatCompletion`,
-                            method: 'POST',
-                            isAuthenticated: true,
-                            body,
-                            responseElement: null,
-                            triggerButton: App.dom.qs.agentChatSendBtn
-                        });
+                        try {
+                            animationIntervalId = App.ui.startCancellableOperation(button, 'Sending');
 
-                        if (error) {
-                            App.ui.appendMessageToChatLog(`Error: ${error.message}`, 'system-error');
-                            return;
-                        }
+                            const timeoutId = setTimeout(() => controller.abort(), App.state.apiTimeoutSeconds * 1000);
+                            App.state.currentAbortTimeout = timeoutId;
 
-                        const answer = (typeof data.data === 'object' && data.data.data) ? data.data.data : data.data.answer || JSON.stringify(data.data);
-                        if (answer) {
-                            App.ui.appendMessageToChatLog(answer, 'agent');
-                        } else {
-                            const errorMessage = `Received an unexpected response: ${JSON.stringify(data?.data || 'empty response')}`;
-                            App.ui.appendMessageToChatLog(errorMessage, 'system-error');
+                            const body = {
+                                question: question,
+                                chat_id: App.state.chatId,
+                                model: App.state.model,
+                                call: App.state.currentSessionTools
+                            };
+                            const modelKeyOverride = document.getElementById('qs-agent-model-key').value;
+                            if (modelKeyOverride.trim()) body.apiKey = modelKeyOverride;
+                            App.updateState('lastChatCompletionBody', body);
+
+                            const { data, error } = await App.makeApiCall({
+                                url: `${App.state.endpointUrl}/chatCompletion`,
+                                method: 'POST',
+                                isAuthenticated: true,
+                                body,
+                                signal: controller.signal
+                            });
+
+                            if (error) {
+                                if (error.name !== 'AbortError') App.ui.appendMessageToChatLog(`Error: ${error.message}`, 'system-error');
+                                return;
+                            }
+
+                            const answer = (typeof data.data === 'object' && data.data.data) ? data.data.data : data.data.answer || JSON.stringify(data.data);
+                            if (answer) {
+                                App.ui.appendMessageToChatLog(answer, 'agent');
+                            } else {
+                                App.ui.appendMessageToChatLog(`Received an unexpected response: ${JSON.stringify(data?.data || 'empty response')}`, 'system-error');
+                            }
+                        } finally {
+                            clearTimeout(App.state.currentAbortTimeout);
+                            App.ui.endCancellableOperation(button, animationIntervalId, originalState);
+                            App.state.currentAbortController = null;
+                            App.state.currentAbortTimeout = null;
                         }
                     },
 
                     async handleSaveAgent(button) {
                         const davUrl = document.getElementById('qs-agent-dav-url').value;
-                        const agentPrompt = document.getElementById('qs-agent-prompt').value;
+                        let agentPrompt = document.getElementById('qs-agent-prompt').value;
                         const responseEl = App.dom.qs.configResponseEl;
 
                         const metadata = {
+                            name: document.getElementById('qs-agent-id').value.trim(),
                             id: document.getElementById('qs-agent-id').value.trim(),
                             title: document.getElementById('qs-agent-title').value.trim(),
                             version: document.getElementById('qs-agent-version').value.trim(),
@@ -1882,6 +2271,11 @@
                         }
 
                         try {
+                            agentPrompt = agentPrompt.replace(/\*\*Name:\*\*\s*.+$/m, `**Name:** ${metadata.name}`);
+                            agentPrompt = agentPrompt.replace(/\*\*Title:\*\*\s*.+$/m, `**Title:** ${metadata.title}`);
+                            agentPrompt = agentPrompt.replace(/\*\*Version:\*\*\s*.+$/m, `**Version:** ${metadata.version}`);
+                            agentPrompt = agentPrompt.replace(/\*\*Creation Date:\*\*\s*.+$/m, `**Creation Date:** ${metadata.creationDate}`);
+
                             const agentJson = App.utils.transformMarkdownToAgentJson(agentPrompt, metadata);
                             const finalUrl = `${davUrl.replace(/\/$/, '')}/${metadata.id}.json`;
 
@@ -1890,13 +2284,15 @@
                                 method: 'PUT',
                                 isAuthenticated: true,
                                 body: agentJson,
-                                responseElement: responseEl,
-                                triggerButton: button
+                                responseElement: responseEl
                             });
 
                             App.ui.displayAgentCreationResult(responseEl, result, agentJson, metadata);
                             if (result) {
                                 await App.ui.populateAgentDropdown();
+                                document.getElementById('choice-instantiate').checked = true;
+                                document.getElementById('choice-instantiate').dispatchEvent(new Event('change', { bubbles: true }));
+                                App.ui.scrollToStep('qs-step-4-interact');
                             }
                         } catch (error) {
                             console.error("Halting agent creation due to parsing error:", error);
@@ -1909,59 +2305,76 @@
                             App.ui.showError(App.dom.qs.updateTopicResponseEl, new Error('Please create a session first to get a Session ID.'));
                             return;
                         }
-
                         const body = {
                             title: document.getElementById('qs-update-title').value || App.state.title,
                             model: document.getElementById('qs-update-model').value || App.state.model,
                             top_p: parseFloat(document.getElementById('qs-update-top-p').value) || App.state.top_p,
                             temperature: parseFloat(document.getElementById('qs-update-temperature').value) || App.state.temperature
                         };
-
                         const modelKeyOverride = document.getElementById('qs-update-model-key').value;
-                        if (modelKeyOverride.trim()) {
-                            body.apiKey = modelKeyOverride;
-                        }
+                        if (modelKeyOverride.trim()) body.apiKey = modelKeyOverride;
 
-                        await App.makeApiCall({
+                        const { data } = await App.makeApiCall({
                             url: `${App.state.endpointUrl}/chatTopic?chat_id=${App.state.chatId}`,
                             method: 'POST',
                             isAuthenticated: true,
                             body,
-                            responseElement: App.dom.qs.updateTopicResponseEl,
-                            triggerButton: button
+                            responseElement: App.dom.qs.updateTopicResponseEl
                         });
+                        if (data) {
+                            App.ui.scrollToStep('qs-step-6-ask-question');
+                        }
                     },
 
                     async handleChatCompletion(button) {
+                        if (App.state.currentAbortController) {
+                            App.state.currentAbortController.abort();
+                            return;
+                        }
                         if (!App.state.chatId) {
                             App.ui.showError(App.dom.qs.chatCompletionResponseEl, new Error('Please create a session first to get a Session ID.'));
                             return;
                         }
 
-                        const body = {
-                            question: document.getElementById('qs-question').value || App.state.question,
-                            chat_id: App.state.chatId,
-                            model: document.getElementById('qs-update-model').value || App.state.model
-                        };
+                        const originalState = { text: button.textContent, color: button.style.backgroundColor };
+                        const controller = new AbortController();
+                        App.state.currentAbortController = controller;
+                        let animationIntervalId = null;
 
-                        const manualFunctions = App.state.sessionFunctions;
-                        if (!App.state.isAgentSession && manualFunctions.length > 0) {
-                            body.call = manualFunctions.map(f => f.function);
+                        try {
+                            animationIntervalId = App.ui.startCancellableOperation(button, 'Sending');
+
+                            const timeoutId = setTimeout(() => controller.abort(), App.state.apiTimeoutSeconds * 1000);
+                            App.state.currentAbortTimeout = timeoutId;
+
+                            const body = {
+                                question: document.getElementById('qs-question').value || App.state.question,
+                                chat_id: App.state.chatId,
+                                model: document.getElementById('qs-update-model').value || App.state.model
+                            };
+                            const manualFunctions = App.state.sessionFunctions;
+                            if (!App.state.isAgentSession && manualFunctions.length > 0) {
+                                body.call = manualFunctions.map(f => f.function);
+                            }
+                            const modelKeyOverride = document.getElementById('qs-update-model-key').value;
+                            if (modelKeyOverride.trim()) body.apiKey = modelKeyOverride;
+
+                            await App.makeApiCall({
+                                url: `${App.state.endpointUrl}/chatCompletion`,
+                                method: 'POST',
+                                isAuthenticated: true,
+                                body,
+                                responseElement: App.dom.qs.chatCompletionResponseEl,
+                                signal: controller.signal
+                            });
+                        } catch (err) {
+                            if (err.name !== 'AbortError') App.ui.showError(App.dom.qs.chatCompletionResponseEl, err);
+                        } finally {
+                            clearTimeout(App.state.currentAbortTimeout);
+                            App.ui.endCancellableOperation(button, animationIntervalId, originalState);
+                            App.state.currentAbortController = null;
+                            App.state.currentAbortTimeout = null;
                         }
-
-                        const modelKeyOverride = document.getElementById('qs-update-model-key').value;
-                        if (modelKeyOverride.trim()) {
-                            body.apiKey = modelKeyOverride;
-                        }
-
-                        await App.makeApiCall({
-                            url: `${App.state.endpointUrl}/chatCompletion`,
-                            method: 'POST',
-                            isAuthenticated: true,
-                            body,
-                            responseElement: App.dom.qs.chatCompletionResponseEl,
-                            triggerButton: button
-                        });
                     },
 
                     async handleOAuthLogin(button) {
@@ -2049,7 +2462,7 @@
                         App.updateState('isAgentSession', false);
                         App.updateState('currentAgent', null);
                         App.state.oauthEndpoints = null;
-                        App.state.currentSessionTools = []; // Clear session-bound tools
+                        App.state.currentSessionTools = [];
                         App.utils.clearOAuthSession();
                         App.ui.resetApiKeyState(isAutomatic);
                     },
@@ -2168,8 +2581,7 @@
                                 method: method.toUpperCase(),
                                 isAuthenticated: requiresAuth,
                                 body,
-                                responseElement: responseEl,
-                                triggerButton: runBtn
+                                responseElement: responseEl
                             });
                             App.ui.updateCodeSnippetsForCard(card);
                             return;
@@ -2204,10 +2616,70 @@
                                 btn.dataset.state = 'masked';
                             }
                         }
+                    },
+
+                    handleCopyContent(event) {
+                        const btn = event.target.closest('.btn-copy-content');
+                        if (!btn) return;
+
+                        let content = '';
+                        const targetId = btn.dataset.targetId;
+
+                        if (targetId) {
+                            const targetElement = document.getElementById(targetId);
+                            if (targetElement) {
+                                content = targetElement.tagName === 'TEXTAREA' ? targetElement.value : targetElement.textContent;
+                            }
+                        } else {
+                            const messageContent = btn.closest('.message')?.querySelector('.message-content');
+                            if (messageContent) {
+                                content = messageContent.textContent;
+                            }
+                        }
+
+                        if (content) {
+                            navigator.clipboard.writeText(content).then(() => {
+                                const originalText = btn.textContent;
+                                btn.textContent = 'Copied!';
+                                btn.style.backgroundColor = 'var(--color-success)';
+                                setTimeout(() => {
+                                    btn.textContent = originalText;
+                                    btn.style.backgroundColor = '';
+                                }, 2000);
+                            }).catch(err => {
+                                console.error('Failed to copy content: ', err);
+                                const originalText = btn.textContent;
+                                btn.textContent = 'Error!';
+                                btn.style.backgroundColor = 'var(--color-error)';
+                                setTimeout(() => {
+                                    btn.textContent = originalText;
+                                    btn.style.backgroundColor = '';
+                                }, 2000);
+                            });
+                        }
                     }
                 },
 
                 ui: {
+                    startCancellableOperation(button, baseText) {
+                        button.disabled = false;
+                        button.style.backgroundColor = 'var(--color-error)';
+                        let dotCount = 1;
+                        const intervalId = setInterval(() => {
+                            const dots = '.'.repeat(dotCount);
+                            button.textContent = `${baseText}${dots} (Click to Cancel)`;
+                            dotCount = (dotCount % 3) + 1;
+                        }, 500);
+                        return intervalId;
+                    },
+
+                    endCancellableOperation(button, intervalId, originalState) {
+                        clearInterval(intervalId);
+                        button.disabled = false;
+                        button.textContent = originalState.text;
+                        button.style.backgroundColor = originalState.color;
+                    },
+
                     showLoading(element) {
                         if (!element) return;
                         element.textContent = 'Loading...';
@@ -2234,6 +2706,100 @@
 
                         const jsonString = typeof result.data === 'object' ? JSON.stringify(result.data, null, 2) : String(result.data);
                         element.textContent = jsonString;
+                    },
+
+                    populateLlmProviderDropdown(providers) {
+                        const providerSelect = document.getElementById('llm-provider-select');
+                        if (!providerSelect) return;
+
+                        if (!providers || providers.length === 0) {
+                            providerSelect.innerHTML = '<option value="">No providers found</option>';
+                            return;
+                        }
+
+                        providerSelect.innerHTML = '';
+                        providers.sort().forEach(provider => {
+                            const option = document.createElement('option');
+                            option.value = provider;
+                            option.textContent = provider.charAt(0).toUpperCase() + provider.slice(1);
+                            providerSelect.appendChild(option);
+                        });
+                    },
+
+                    renderLlmProviderView(providerName) {
+                        const llmProviderView = document.getElementById('llm-provider-view');
+                        if (!llmProviderView || !providerName) return;
+
+                        const models = App.state.llmProviders[providerName] || [];
+
+                        const allProviders = Object.keys(App.state.llmProviders).sort();
+
+                        let html = '';
+
+                        html += '<div class="llm-list">';
+                        html += '<h5>Currently Bound LLMs</h5>';
+
+                        if (models.length === 0) {
+                            html += '<div class="llm-empty-state">No models found for this provider.</div>';
+                        } else {
+                            models.forEach(model => {
+                                const modelId = model.id || model.model || 'Unknown';
+                                html += `
+                <div class="llm-item">
+                    <div class="llm-item-info">
+                        <div class="llm-item-name">${modelId}</div>
+                        <div class="llm-item-provider">Provider: ${providerName}</div>
+                    </div>
+                    <button class="btn-remove-model" data-model-id="${modelId}" data-provider="${providerName}">
+                        Remove
+                    </button>
+                </div>
+            `;
+                            });
+                        }
+                        html += '</div>';
+
+                        html += '<div class="llm-form">';
+                        html += '<h5>Add New LLM</h5>';
+                        html += '<div class="llm-form-row">';
+
+                        html += '<div class="input-group">';
+                        html += '<label for="llm-provider-select-add">Provider</label>';
+                        html += '<select id="llm-provider-select-add">';
+                        allProviders.forEach(provider => {
+                            const selected = provider === providerName ? ' selected' : '';
+                            html += `<option value="${provider}"${selected}>${provider.charAt(0).toUpperCase() + provider.slice(1)}</option>`;
+                        });
+                        html += '<option value="__custom__">+ Add Custom Provider</option>';
+                        html += '</select>';
+                        html += '</div>';
+
+                        html += '<div class="input-group">';
+                        html += '<label for="llm-model-id-input">Model ID</label>';
+                        html += '<input type="text" id="llm-model-id-input" placeholder="e.g., gpt-4o-mini">';
+                        html += '</div>';
+
+                        html += '<button id="llm-add-btn" class="btn btn-primary">Add</button>';
+                        html += '</div>';
+
+                        html += '<div id="custom-provider-input" style="display: none; margin-top: 1rem;">';
+                        html += '<div class="input-group">';
+                        html += '<label for="llm-custom-provider-input">Custom Provider Name</label>';
+                        html += '<input type="text" id="llm-custom-provider-input" placeholder="e.g., anthropic">';
+                        html += '</div>';
+                        html += '</div>';
+
+                        html += '</div>';
+
+                        llmProviderView.innerHTML = html;
+
+                        const providerSelect = document.getElementById('llm-provider-select-add');
+                        const customProviderInput = document.getElementById('custom-provider-input');
+                        if (providerSelect && customProviderInput) {
+                            providerSelect.addEventListener('change', (e) => {
+                                customProviderInput.style.display = e.target.value === '__custom__' ? 'block' : 'none';
+                            });
+                        }
                     },
 
                     switchToAgentChatView(agentTitle, initialMessage) {
@@ -2265,7 +2831,6 @@
                         const responseEl = App.dom.qs.configResponseEl;
                         responseEl.innerHTML = 'Response will appear here...';
                         responseEl.className = 'response-viewer';
-                        document.getElementById('qs-alt-question').value = '';
                     },
 
                     appendMessageToChatLog(message, sender) {
@@ -2287,6 +2852,15 @@
 
                         messageDiv.appendChild(senderDiv);
                         messageDiv.appendChild(contentDiv);
+
+                        if (sender === 'agent' || sender === 'system-error') {
+                            const copyBtn = document.createElement('button');
+                            copyBtn.className = 'btn-copy-content';
+                            copyBtn.title = 'Copy this message';
+                            copyBtn.textContent = 'Copy';
+                            messageDiv.appendChild(copyBtn);
+                        }
+
                         chatLog.appendChild(messageDiv);
 
                         chatLog.scrollTop = chatLog.scrollHeight;
@@ -2383,14 +2957,18 @@
                                             <div class="code-tabs">
                                                 <div class="code-tab active" data-lang="curl">cURL</div>
                                                 <div class="code-tab" data-lang="javascript">JavaScript</div>
+                                                <div class="code-tab" data-lang="typescript">TypeScript</div>
                                                 <div class="code-tab" data-lang="python">Python</div>
                                                 <div class="code-tab" data-lang="java">Java</div>
+                                                <div class="code-tab" data-lang="rust">Rust</div>
                                             </div>
                                             <div class="code-snippet-container">
                                                 <pre class="code-snippet active" data-lang="curl"></pre>
                                                 <pre class="code-snippet" data-lang="javascript"></pre>
+                                                <pre class="code-snippet" data-lang="typescript"></pre>
                                                 <pre class="code-snippet" data-lang="python"></pre>
                                                 <pre class="code-snippet" data-lang="java"></pre>
+                                                <pre class="code-snippet" data-lang="rust"></pre>
                                             </div>
                                         </div>
                                     </div>
@@ -2445,7 +3023,7 @@
                                     delete bodyJson.apiKey;
                                 }
                                 textarea.value = JSON.stringify(bodyJson, null, 2);
-                            } catch (e) { /* Ignore invalid user JSON */ }
+                            } catch (e) { }
                         });
 
                         syncCard('/chatTopic', 'post', (card) => {
@@ -2466,7 +3044,7 @@
                                     delete bodyJson.apiKey;
                                 }
                                 textarea.value = JSON.stringify(bodyJson, null, 2);
-                            } catch (e) { /* Ignore invalid user JSON */ }
+                            } catch (e) { }
                         });
                     },
 
@@ -2474,7 +3052,7 @@
                         const endpointId = cardElement.id;
                         if (!endpointId) return;
                         const endpointData = App.utils.getEndpointData(endpointId);
-                        ['curl', 'javascript', 'python', 'java'].forEach(lang => {
+                        ['curl', 'javascript', 'typescript', 'python', 'java', 'rust'].forEach(lang => {
                             const snippet = App.utils.generateCodeSnippet(lang, endpointData);
                             const snippetElement = cardElement.querySelector(`.code-snippet[data-lang="${lang}"]`);
                             if (snippetElement) snippetElement.textContent = snippet;
@@ -2828,7 +3406,8 @@
                         const paths = {
                             functions: document.getElementById('path-functions'),
                             instantiate: document.getElementById('path-instantiate'),
-                            create: document.getElementById('path-create')
+                            create: document.getElementById('path-create'),
+                            llms: document.getElementById('path-llms')
                         };
                         const step5Container = document.getElementById('qs-step-5-modify-session').closest('.timeline-item');
                         const step6Container = document.getElementById('qs-step-6-ask-question').closest('.timeline-item');
@@ -2837,7 +3416,7 @@
                         document.querySelector('.session-choice').addEventListener('change', (e) => {
                             const selectedValue = e.target.value;
 
-                            if (selectedValue === 'instantiate') {
+                            if (selectedValue === 'instantiate' || selectedValue === 'llms') {
                                 step5Container.style.display = 'none';
                                 step6Container.style.display = 'none';
                             } else {
@@ -2858,10 +3437,17 @@
                                     const idInput = document.getElementById('qs-agent-id');
                                     if (!idInput.value) idInput.value = 'my-new-agent';
                                     const titleInput = document.getElementById('qs-agent-title');
-                                    if (!titleInput.value) titleInput.value = 'My New Agent';
+                                    if (!titleInput.value) titleInput.value = 'Agent';
                                     const versionInput = document.getElementById('qs-agent-version');
                                     if (!versionInput.value) versionInput.value = '1.0.0';
                                     document.getElementById('qs-agent-creation-date').value = new Date().toISOString();
+                                    const promptTextarea = document.getElementById('qs-agent-prompt');
+                                    if (!promptTextarea.value) {
+                                        promptTextarea.value = App.state.defaultAgentTemplate;
+                                        promptTextarea.dispatchEvent(new Event('input'));
+                                    }
+                                } else if (selectedValue === 'llms') {
+                                    App.handlers.handleListModels();
                                 }
                             }
                         });
@@ -3013,6 +3599,30 @@ fetch(url, options)
     .then(response => response.json())
     .then(data => console.log(data))
     .catch(error => console.error('Error:', error));`;
+                            case 'typescript':
+                                const tsBody = sanitizedBody ? `    body: JSON.stringify(${JSON.stringify(sanitizedBody, null, 4)}),` : '';
+                                return `async function makeApiCall(): Promise<void> {
+    const url: string = "${fullUrl}";
+    const options: RequestInit = {
+        method: '${method.toUpperCase()}',
+        headers: {
+${Object.entries(headers).map(([key, value]) => `            '${key}': '${value}'`).join(',\n')}
+        },
+${tsBody ? `        ${tsBody.trim()}\n` : ''}    };
+
+    try {
+        const response: Response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(\`HTTP error! status: \${response.status}\`);
+        }
+        const data: any = await response.json();
+        console.log(data);
+    } catch (error) {
+        console.error('Error making API call:', error);
+    }
+}
+
+makeApiCall();`;
                             case 'python':
                                 return `import requests
 import json
@@ -3049,6 +3659,45 @@ ${JSON.stringify(sanitizedBody, null, 2)}
 
         System.out.println(response.body());
     }
+}`;
+                            case 'rust':
+                                const rustBody = sanitizedBody ? `    let body: serde_json::Value = serde_json::from_str(r#"
+${JSON.stringify(sanitizedBody, null, 2)}
+"#)?;` : '';
+
+                                const rustSend = sanitizedBody ? `        .json(&body)` : '';
+
+                                return `// Add to Cargo.toml:
+// reqwest = { version = "0.11", features = ["json"] }
+// tokio = { version = "1", features = ["full"] }
+// serde_json = "1.0"
+
+use reqwest::{Client, header};
+use serde_json::Value;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = Client::new();
+    let url = "${fullUrl}";
+
+    let mut headers = header::HeaderMap::new();
+    headers.insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
+${requiresAuth ? `    headers.insert(header::AUTHORIZATION, "Bearer ${App.state.isApiKeyVisible ? (App.state.apiKey || "YOUR_API_KEY") : "[...masked for security...]"}".parse().unwrap());` : ''}
+
+${rustBody}
+
+    let response = client.${method}(url)
+        .headers(headers)
+${rustSend}
+        .send()
+        .await?;
+
+    println!("Status: {}", response.status());
+    
+    let response_json: Value = response.json().await?;
+    println!("Response:\\n{}", serde_json::to_string_pretty(&response_json)?);
+
+    Ok(())
 }`;
                         }
                         return '';
@@ -3184,12 +3833,10 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                     },
 
                     transformMarkdownToAgentJson(markdownText, metadata) {
-                        // Helper: UTF-8-safe base64 encode
                         const encodeB64 = (str) => {
                             try { return btoa(unescape(encodeURIComponent(str))); }
                             catch (e) { return btoa(str); }
                         };
-                        // Escape angle brackets in visible text to avoid HTML stripping
                         const escapeAngles = (s) => typeof s === 'string' ? s.replace(/</g, '\\u003C').replace(/>/g, '\\u003E') : s;
 
                         try {
@@ -3214,17 +3861,14 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                 return t;
                             };
 
-                            // Root key: prefer metadata.id, else H1 title fallback
                             const h1 = (text.match(/^\s*#\s*(.+)$/m) || [, null])[1];
                             const rootKey = (metadata && metadata.id) ? String(metadata.id) : (h1 ? toCamel(h1) : 'agent');
                             const root = { [rootKey]: Object.assign({}, metadata || {}) };
                             if (!root[rootKey].name) root[rootKey].name = h1 || metadata?.title || rootKey;
 
-                            // parser state
                             const contextStack = [{ level: 0, obj: root[rootKey] }];
-                            const listParents = {}; // indent -> parent object for nested bullets
+                            const listParents = {};
 
-                            // multiline and fences
                             let inFence = false, fenceMarker = '', fenceLang = '', fenceBuffer = [];
                             let inInlineSparql = false, inlineBuffer = [];
 
@@ -3246,7 +3890,7 @@ ${JSON.stringify(sanitizedBody, null, 2)}
 
                             const closeInlineSparql = () => {
                                 if (!inInlineSparql) return;
-                                const codeText = inlineBuffer.join('\n'); // verbatim
+                                const codeText = inlineBuffer.join('\n');
                                 const b64 = encodeB64(codeText);
                                 const ctx = contextStack[contextStack.length - 1];
                                 if (Array.isArray(ctx.obj) && ctx.obj.length > 0 && typeof ctx.obj[ctx.obj.length - 1] === 'object') {
@@ -3269,10 +3913,8 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                 const line = rawLine;
                                 const trimmed = line.trim();
 
-                                // Fenced code handling
                                 const fenceMatch = trimmed.match(/^(`{3,}|~{3,})(.*)$/);
                                 if (fenceMatch) {
-                                    // finalize any inline SPARQL
                                     if (inInlineSparql) closeInlineSparql();
                                     commitMultiline();
                                     const marker = fenceMatch[1], info = fenceMatch[2].trim();
@@ -3280,7 +3922,7 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                         inFence = true; fenceMarker = marker; fenceLang = info; fenceBuffer = [];
                                     } else if (marker === fenceMarker) {
                                         inFence = false;
-                                        const codeText = fenceBuffer.join('\n'); // verbatim
+                                        const codeText = fenceBuffer.join('\n');
                                         const b64 = encodeB64(codeText);
                                         const looksLikeSparql = /^\s*SPARQL\b/i.test(codeText) || /\bPREFIX\b/i.test(codeText) || /\bBASE\b/i.test(codeText) || fenceLang.includes('sparql');
 
@@ -3309,14 +3951,13 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                 }
                                 if (inFence) { fenceBuffer.push(line); continue; }
 
-                                // Inline SPARQL start
                                 if (!inInlineSparql && trimmed.match(/^(SPARQL\b|PREFIX\b|BASE\b|@prefix\b)/i)) {
                                     commitMultiline();
                                     inInlineSparql = true; inlineBuffer = [line];
                                     continue;
                                 }
                                 if (inInlineSparql) {
-                                    if (!trimmed || trimmed.match(/^(#{1,6})\s+/) || /^-{3,}\s*$/.test(trimmed) || /^\s*[-*]\s+/.test(line) || /^\s*\d+\.\s+/.test(trimmed)) {
+                                    if (!trimmed || trimmed.match(/^(#{1,6})\s+/) || /^[-*_]{3,}\s*$/.test(trimmed) || /^\s*[-*]\s+/.test(line) || /^\s*\d+\.\s+/.test(trimmed)) {
                                         closeInlineSparql();
                                     } else {
                                         inlineBuffer.push(line);
@@ -3324,28 +3965,23 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                     }
                                 }
 
-                                // blank / separators / images
-                                if (!trimmed || /^-{3,}$/.test(trimmed) || /^\s*!?\[/.test(trimmed)) { commitMultiline(); continue; }
+                                if (!trimmed || /^[-*_]{3,}\s*$/.test(trimmed) || /^\s*!?\[/.test(trimmed)) { commitMultiline(); continue; }
 
-                                // Heading
                                 const hMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
                                 if (hMatch) {
                                     commitMultiline();
                                     const level = hMatch[1].length;
-                                    const title = hMatch[2].trim();
+                                    const title = hMatch[2].replace(/\*\*/g, '').trim();
                                     const key = toCamel(title);
                                     while (contextStack.length > 0 && contextStack[contextStack.length - 1].level >= level) contextStack.pop();
                                     const parent = contextStack[contextStack.length - 1].obj;
-                                    // create or reuse
                                     if (!Object.prototype.hasOwnProperty.call(parent, key)) parent[key] = {};
                                     else if (Array.isArray(parent[key])) parent[key] = { items: parent[key] };
                                     contextStack.push({ level, obj: parent[key], key });
-                                    // reset list parents
                                     for (const k in listParents) delete listParents[k];
                                     continue;
                                 }
 
-                                // Bold key:value
                                 const kv = trimmed.match(/^\s*[-*]?\s*\*\*(.+?)\*\*\s*:\s*(.*)$/);
                                 if (kv) {
                                     commitMultiline();
@@ -3362,7 +3998,6 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                     continue;
                                 }
 
-                                // Bullet handling
                                 const bullet = rawLine.match(/^(\s*)[-*]\s+(.*)$/);
                                 if (bullet) {
                                     commitMultiline();
@@ -3415,7 +4050,6 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                     }
                                 }
 
-                                // Numbered list
                                 const numMatch = trimmed.match(/^\s*\d+\.\s+(.*)$/);
                                 if (numMatch) {
                                     commitMultiline();
@@ -3426,32 +4060,30 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                     continue;
                                 }
 
-                                // Multiline continuation for bold-values
                                 if (multilineKey && multilineTarget) {
                                     multilineBuf.push(line);
                                     continue;
                                 }
 
-                                // Otherwise attach as description
                                 const curr = current().obj;
                                 if (typeof curr === 'object' && !Array.isArray(curr) && trimmed) {
                                     curr.description = ((curr.description || '') + (curr.description ? '\n' : '') + trimmed).trim();
                                 }
                             }
 
-                            // finalize any inline or multiline
                             if (inInlineSparql) closeInlineSparql();
                             commitMultiline();
 
-                            // --- START: YOUR CORRECTED POST-PROCESSING LOGIC ---
                             const agentData = {};
                             const originalRoot = root[rootKey];
 
-                            // Extract basic info
-                            if (originalRoot.name) agentData.name = originalRoot.name;
+                            if (originalRoot.title) {
+                                agentData.name = originalRoot.title;
+                            } else if (originalRoot.name) {
+                                agentData.name = originalRoot.name;
+                            }
                             if (originalRoot.version) agentData.version = originalRoot.version;
 
-                            // Handle features
                             if (originalRoot.features || originalRoot.virtuosoSupportAgent?.features) {
                                 const featuresSource = originalRoot.features || originalRoot.virtuosoSupportAgent?.features;
                                 agentData.features = {};
@@ -3463,7 +4095,6 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                 });
                             }
 
-                            // Handle functions - check multiple possible locations
                             let functionsData = null;
                             if (originalRoot.functions) {
                                 functionsData = originalRoot.functions;
@@ -3473,7 +4104,6 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                 functionsData = originalRoot.virtuosoSupportAgent.features.functions;
                             }
 
-                            // YOUR ENHANCEMENT FOR ROBUSTNESS
                             let markdownFunctions = [];
                             if (functionsData && functionsData.list && Array.isArray(functionsData.list)) {
                                 const transformedMarkdownFunctions = functionsData.list.map(item => {
@@ -3488,30 +4118,25 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                                 markdownFunctions = transformedMarkdownFunctions;
                             }
 
-                            // Set up functions structure
                             if (!agentData.features) agentData.features = {};
                             agentData.features.functions = {};
 
-                            // Add description if available
                             if (functionsData && functionsData.description) {
                                 agentData.features.functions.description = functionsData.description;
                             }
 
-                            // Handle metadata functions (these take precedence)
                             if (metadata && Array.isArray(metadata.functions) && metadata.functions.length) {
-                                // Transform metadata functions to correct format
                                 const transformedFunctions = metadata.functions.map(f => {
                                     const result = {};
 
                                     if (f.function) {
-                                        result.name = f.function;  // Transform function -> name
+                                        result.name = f.function;
                                     } else if (f.name) {
                                         result.name = f.name;
                                     } else {
                                         result.name = typeof f === 'string' ? f : String(f);
                                     }
 
-                                    // Preserve other properties like title
                                     Object.keys(f).forEach(key => {
                                         if (key !== 'function' && key !== 'name') {
                                             result[key] = f[key];
@@ -3523,37 +4148,30 @@ ${JSON.stringify(sanitizedBody, null, 2)}
 
                                 agentData.features.functions.list = transformedFunctions;
                             } else if (markdownFunctions.length > 0) {
-                                // Use markdown functions if no metadata functions
                                 agentData.features.functions.list = markdownFunctions;
                             } else if (functionsData && functionsData.list) {
-                                // Fallback to any existing list
                                 agentData.features.functions.list = functionsData.list;
                             }
 
-                            // Copy other top-level sections
                             ['commands', 'rules', 'preferences', 'formats', 'initialization', 'queryProcessingFeatures', 'predefinedPrompts', 'predefinedQueryTemplates', 'fallbackStrategies'].forEach(section => {
                                 if (originalRoot[section]) {
                                     agentData[section] = originalRoot[section];
                                 }
                             });
 
-                            // Handle any remaining sections that might be nested
                             Object.keys(originalRoot).forEach(key => {
                                 if (!['name', 'version', 'features', 'functions', 'commands', 'rules', 'preferences', 'formats', 'initialization', 'queryProcessingFeatures', 'predefinedPrompts', 'predefinedQueryTemplates', 'fallbackStrategies', 'virtuosoSupportAgent'].includes(key)) {
                                     agentData[key] = originalRoot[key];
                                 }
                             });
 
-                            // Return clean structure with agent as root
                             return { agent: agentData };
-                            // --- END OF YOUR CORRECTED POST-PROCESSING LOGIC ---
 
                         } catch (err) {
                             console.error('transformMarkdownToAgentJson error:', err);
                             throw err;
                         }
                     },
-                    // --- END: NEW PARSER INTEGRATION ---
 
                     transformMarkdownToOpenAIJson(markdownText, metadata) {
                         try {
@@ -3627,7 +4245,6 @@ ${JSON.stringify(sanitizedBody, null, 2)}
                 }
             };
 
-            // --- Start the application ---
             App.init();
         });
     </script>
