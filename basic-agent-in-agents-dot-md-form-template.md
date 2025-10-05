@@ -1,4 +1,4 @@
-Agent: Agent 201
+Agent: Basic SPARQL Query Agent 
 
 - **ID:** `my-new-basic-sparql-agent`
 - **Name:** `Basic Generic SPARQL-Driven OPAL Agent`
