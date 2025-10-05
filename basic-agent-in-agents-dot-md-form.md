@@ -1,7 +1,7 @@
-# Agent: Agent 201
+# Agent: Basic SPARQL Query Agent
 
 - **ID:** `my-new-basic-sparql-agent`
-- **Name:** `asic Generic SPARQL-Driven OPAL Agent`
+- **Name:** `Basic Generic SPARQL-Driven OPAL Agent`
 - **Version:** `1.0.1`
 - **Created:** `2025-10-04T22:09:01.995Z`
 
