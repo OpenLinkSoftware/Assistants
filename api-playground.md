@@ -7,3 +7,5 @@ The OPAL API Playground HTML-based Single Page Application (SPA), with OAuth 2.1
 5. **Storage** – via respective APIs for databases, knowledge bases/graphs, filesystems, etc.
 
 ![Screencast Demo](https://www.openlinksw.com/data/gifs/opal-agents-functions-tools-oauth-playground-demo-1.gif)
+
+Click [**HERE**](https://www.openlinksw.com/data//html/opal-system-functions-or-agents-apis-developer-journey-gemini.html) to interact with the live instance on a **Bring Your Own Key (BYOK)** basis — meaning you’ll need to provide the API key for your preferred LLM.
