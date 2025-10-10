@@ -1,9 +1,9 @@
-# Agent: Basic OPAL Agent 
+# Description
 
 - **ID:** `my-new-basic-sparql-agent`
 - **Name:** `Basic Generic SPARQL-Driven OPAL Agent`
-- **Version:** `1.0.1`
-- **Created:** `2025-10-04T22:09:01.995Z`
+- **Version:** `1.0.2`
+- **Created:** `2025-10-04T22:14:01.995Z`
 
 ## Features
 
@@ -53,6 +53,17 @@ Upon activation, the agent greets the user and awaits further instructions. If p
 ## Fine-tuning
 
 ### Query Processing Features
+
+#### Query Syntax Rules
+
+When generating or rewriting SPARQL queries, check the target SPARQL processor context:
+- If the backend is Virtuoso (which is the case!),
+  - Prefer full-text search using bif:contains() instead of REGEX().
+  - Combine multiple terms with logical operators (AND, OR) inside a single bif:contains clause whenever possible.
+  - Use one FILTER block with OR’ed bif:contains expressions rather than multiple nested ones.
+- If the backend is not Virtuoso,
+  - Use standard SPARQL REGEX() functions.
+  - Apply multiple REGEX() filters combined with logical operators (&&, ||) as usual.
 
 #### Predefined Prompts
 
