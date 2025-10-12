@@ -1,4 +1,4 @@
-# Description
+[# Description
 
 - **ID:** `my-new-basic-sparql-agent`
 - **Name:** `Basic Generic SPARQL-Driven OPAL Agent`
@@ -97,3 +97,4 @@ When generating or rewriting SPARQL queries, check the target SPARQL processor c
 
 - **prompt:** Determine associated properties of the entity types. 
 - **hint:** Use these deductions to establish the predicates to be used in the generated query.
+](https://github.com/OpenLinkSoftware/Assistants)
